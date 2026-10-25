@@ -1,0 +1,419 @@
+
+/* ========================================
+   PAGE LAYOUT
+======================================== */
+
+.register-page {
+  height: calc(100vh - 80px);
+  height: calc(100dvh - 80px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #f8f9fd;
+  color: #17213a;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ========================================
+   LEFT BRANDING SECTION - DESKTOP
+======================================== */
+
+.register-brand {
+  background:
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(105, 91, 245, 0.25),
+      transparent 35%
+    ),
+    #111a33;
+  color: #ffffff;
+  padding: clamp(32px, 5vw, 76px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 40px;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.register-brand-content {
+  max-width: 520px;
+}
+
+.register-eyebrow,
+.register-form-eyebrow {
+  color: #8295ff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0 0 22px;
+}
+
+.register-brand-content h1 {
+  font-size: clamp(2.4rem, 4vw, 3.7rem);
+  line-height: 1.15;
+  letter-spacing: -1.5px;
+  margin: 0 0 24px;
+}
+
+.register-brand-content h1 span {
+  display: block;
+  color: #8b9bff;
+}
+
+.register-brand-description {
+  color: #c0c9df;
+  font-size: 1rem;
+  line-height: 1.9;
+  max-width: 440px;
+  margin: 0;
+}
+
+.register-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.register-tags span {
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  color: #e1e7ff;
+  font-size: 0.82rem;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.register-tags span:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #8b9bff;
+}
+
+.register-brand-footer {
+  color: #8e9bb8;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* ========================================
+   RIGHT FORM SECTION - DESKTOP
+   Only this section scrolls
+======================================== */
+
+.register-form-section {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 36px clamp(24px, 5vw, 76px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #c8cde0 transparent;
+}
+
+.register-form-content {
+  width: 100%;
+  max-width: 430px;
+  margin: auto;
+  padding: 12px 0 24px;
+  box-sizing: border-box;
+}
+
+.register-mobile-logo {
+  display: none;
+}
+
+/* ========================================
+   FORM HEADING
+======================================== */
+
+.register-form-eyebrow {
+  margin-bottom: 12px;
+  color: #6478ef;
+}
+
+.register-form-content h2 {
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  line-height: 1.25;
+  letter-spacing: -0.7px;
+  margin: 0 0 12px;
+}
+
+.register-description {
+  color: #747d91;
+  line-height: 1.7;
+  margin: 0 0 26px;
+}
+
+/* ========================================
+   INPUT FIELDS
+======================================== */
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 19px;
+}
+
+.register-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #29344d;
+}
+
+.register-field input,
+.register-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 15px;
+  border: 1px solid #dce1ed;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #17213a;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.register-field input::placeholder {
+  color: #a0a7b7;
+}
+
+.register-field select {
+  cursor: pointer;
+}
+
+.register-field input:focus,
+.register-field select:focus {
+  border-color: #7182f5;
+  box-shadow: 0 0 0 3px rgba(113, 130, 245, 0.12);
+}
+
+.register-field-hint {
+  color: #858da0;
+  font-size: 0.78rem;
+}
+
+/* ========================================
+   VALIDATION MESSAGES
+======================================== */
+
+.register-error,
+.register-success {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.register-error {
+  color: #c0394b;
+}
+
+.register-success {
+  color: #267a50;
+}
+
+/* ========================================
+   CREATE ACCOUNT BUTTON
+======================================== */
+
+.register-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  margin-top: 5px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(100deg, #617cf4, #7959e8);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.register-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(97, 124, 244, 0.24);
+}
+
+.register-button:focus-visible {
+  outline: 3px solid #aab5ff;
+  outline-offset: 3px;
+}
+
+/* ========================================
+   SIGN IN AND HOME LINKS
+======================================== */
+
+.register-signin-prompt {
+  color: #747d91;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  text-align: center;
+  margin: 25px 0 0;
+}
+
+.register-signin-link,
+.register-back-home {
+  color: #5367ce;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.register-signin-link:hover,
+.register-back-home:hover {
+  color: #7959e8;
+  text-decoration: underline;
+}
+
+.register-back-home {
+  display: block;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 22px;
+}
+
+/* ========================================
+   TABLETS AND MOBILE
+   Normal page scrolling on small screens
+======================================== */
+
+@media (max-width: 760px) {
+  .register-page {
+    height: auto;
+    min-height: calc(100vh - 80px);
+    min-height: calc(100dvh - 80px);
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  /* Compact branding at the top */
+
+  .register-brand {
+    height: auto;
+    min-height: 0;
+    padding: 24px 24px 22px;
+    gap: 12px;
+    overflow: visible;
+  }
+
+  .register-brand-content {
+    max-width: 520px;
+  }
+
+  .register-eyebrow {
+    font-size: 0.7rem;
+    margin-bottom: 12px;
+  }
+
+  .register-brand-content h1 {
+    font-size: clamp(1.9rem, 7vw, 2.6rem);
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+
+  .register-brand-description {
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .register-tags {
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .register-tags span {
+    padding: 7px 11px;
+    font-size: 0.75rem;
+  }
+
+  .register-brand-footer {
+    display: none;
+  }
+
+  /* Form follows branding in the page */
+
+  .register-form-section {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    overscroll-behavior: auto;
+    padding: 24px 24px 36px;
+  }
+
+  .register-form-content {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0;
+  }
+
+  .register-mobile-logo {
+    display: inline-block;
+    color: #5367ce;
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-decoration: none;
+    margin-bottom: 22px;
+  }
+
+  .register-form-content h2 {
+    font-size: 1.8rem;
+  }
+
+  .register-description {
+    margin-bottom: 22px;
+  }
+
+  .register-field {
+    margin-bottom: 17px;
+  }
+}
+
+/* ========================================
+   EXTRA SMALL PHONES
+======================================== */
+
+@media (max-width: 380px) {
+  .register-brand {
+    padding: 22px 18px 18px;
+  }
+
+  .register-brand-content h1 {
+    font-size: 1.8rem;
+  }
+
+  .register-brand-description {
+    font-size: 0.86rem;
+  }
+
+  .register-tags {
+    gap: 7px;
+  }
+
+  .register-tags span {
+    font-size: 0.7rem;
+    padding: 7px 9px;
+  }
+
+  .register-form-section {
+    padding: 22px 18px 30px;
+  }
+
+  .register-form-content h2 {
+    font-size: 1.65rem;
+  }
+}

@@ -13,7 +13,7 @@ function GetStarted() {
         closer than you think.
       </p>
 
-      <Link to="/" className="primary-button">
+      <Link to="/login" className="primary-button">
         Get Started with HackMate AI
       </Link>
 

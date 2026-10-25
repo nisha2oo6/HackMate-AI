@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 function Home() {
   return (
     <main className="home-page">
+      {/* SECTION 1: HERO */}
       <section className="home-hero">
         <div className="hero-glow" />
 
@@ -24,15 +25,7 @@ function Home() {
             departments and build a team that brings your ideas to life.
           </p>
 
-          <div className="hero-actions">
-            <Link to="/get-started" className="primary-button">
-              Get Started <span aria-hidden="true">→</span>
-            </Link>
-
-            <Link to="/about" className="secondary-button">
-              Discover HackMate AI
-            </Link>
-          </div>
+          {/* Hero buttons removed as requested */}
 
           <div className="hero-highlights">
             <span>✦ Smart Teammate Matching</span>
@@ -41,7 +34,11 @@ function Home() {
           </div>
         </div>
 
-        <div className="hero-visual" aria-label="How HackMate AI helps build teams">
+        {/* CIRCULAR TEAM ILLUSTRATION */}
+        <div
+          className="hero-visual"
+          aria-label="How HackMate AI helps students build teams"
+        >
           <div className="orbit orbit-one" />
           <div className="orbit orbit-two" />
 
@@ -68,10 +65,10 @@ function Home() {
           </div>
 
           <div className="floating-card card-right">
-            <span className="avatar avatar-blue">D</span>
+            <span className="avatar avatar-blue">T</span>
             <div>
-              <strong>Developer</strong>
-              <p>Java · Web</p>
+              <strong>Find Your Teammates</strong>
+              <p>Skills · Collaboration</p>
             </div>
           </div>
 
@@ -85,6 +82,7 @@ function Home() {
         </div>
       </section>
 
+      {/* SECTION 2: FEATURES — EXISTING CONTENT PRESERVED */}
       <section className="home-features">
         <div className="section-heading">
           <span className="eyebrow">BUILT FOR STUDENT INNOVATORS</span>
@@ -125,16 +123,84 @@ function Home() {
         </div>
       </section>
 
+      
+      {/* SECTION 3: GET STARTED WITH HACKMATE AI */}
       <section className="home-cta">
-        <p className="eyebrow">YOUR NEXT COLLABORATION STARTS HERE</p>
-        <h2>Great ideas deserve great teams.</h2>
-        <p>
-          Step beyond your circle. Meet your next collaborator.
-        </p>
-        <Link to="/get-started" className="primary-button">
-          Find Your People →
-        </Link>
+        <div className="cta-heading">
+          <p className="eyebrow">
+            YOUR NEXT COLLABORATION STARTS HERE
+          </p>
+
+          <h2>Great ideas deserve great teams.</h2>
+
+          <p className="cta-intro">
+            Step beyond your circle. Meet your next collaborator.
+          </p>
+        </div>
+
+        <div className="cta-layout">
+          {/* Left: Main message and call to action */}
+          <div className="cta-main">
+            <span className="cta-label">
+              YOUR NEXT CHAPTER STARTS HERE
+            </span>
+
+            <h3>
+              Stop Searching Alone.
+              <br />
+              <span>Start Building Together.</span>
+            </h3>
+
+            <p className="cta-description">
+              Your next hackathon, project partner, or big idea
+              could be closer than you think.
+            </p>
+
+            <Link to="/get-started" className="primary-button cta-button">
+              Get Started with HackMate AI
+              <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+
+          {/* Right: Why students should join */}
+          <div className="cta-cards">
+            <article className="cta-card">
+              <span className="cta-card-icon">01</span>
+              <div>
+                <h3>Real-time Matchmaking</h3>
+                <p>
+                  Find students whose skills complement yours.
+                </p>
+              </div>
+              <span className="cta-card-arrow" aria-hidden="true">↗</span>
+            </article>
+
+            <article className="cta-card">
+              <span className="cta-card-icon">02</span>
+              <div>
+                <h3>Cross-discipline Teams</h3>
+                <p>
+                  Collaborate with talented students across departments.
+                </p>
+              </div>
+              <span className="cta-card-arrow" aria-hidden="true">↗</span>
+            </article>
+
+            <article className="cta-card">
+              <span className="cta-card-icon">03</span>
+              <div>
+                <h3>Direct Collaboration</h3>
+                <p>
+                  Connect with potential teammates and start
+                  building together.
+                </p>
+              </div>
+              <span className="cta-card-arrow" aria-hidden="true">↗</span>
+            </article>
+          </div>
+        </div>
       </section>
+
     </main>
   );
 }

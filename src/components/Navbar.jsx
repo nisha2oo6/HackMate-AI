@@ -17,7 +17,7 @@ function Navbar() {
           </div>
         </Link>
 
-        {/* Navigation links */}
+        {/* Main navigation */}
         <nav className="nav-links" aria-label="Main navigation">
           <NavLink to="/" end>
             Home
@@ -26,17 +26,10 @@ function Navbar() {
           <NavLink to="/about">
             About Us
           </NavLink>
-
-
-          <NavLink to="/get-started" className="nav-cta">
-            Get Started
-          </NavLink>
         </nav>
 
-        {/* Login button */}
-        <Link to="/get-started" className="login-button">
-          Login
-        </Link>
+        {/* Login */}
+        <Link to="/login">Login</Link>
       </div>
     </header>
   );
