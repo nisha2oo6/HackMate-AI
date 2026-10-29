@@ -12,6 +12,9 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import StudentDashboard from "./pages/StudentDashboard";
+import StudentProfile from "./pages/StudentProfile";
+import FindTeammates from "./pages/FindTeammates";
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -38,6 +41,15 @@ function App() {
           <Route
   path="/forgot-password"
   element={<ForgotPassword />}
+/>
+          <Route
+  path="/dashboard"
+  element={<StudentDashboard />}
+/>
+        <Route path="/profile" element={<StudentProfile />} />
+        <Route
+  path="/find-teammates"
+  element={<FindTeammates />}
 />
         </Routes>
       </div>
