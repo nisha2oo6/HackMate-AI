@@ -15,6 +15,10 @@ import { useLocation } from "react-router-dom";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentProfile from "./pages/StudentProfile";
 import FindTeammates from "./pages/FindTeammates";
+import CreateTeam from "./pages/CreateTeam";
+import StudentPublicProfile from "./pages/StudentPublicProfile";
+import MyTeams from "./pages/MyTeams";
+import TeamDetails from "./pages/TeamDetails";
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -38,6 +42,7 @@ function App() {
           <Route path="/about/how-it-works" element={<HowItWorks />} />
           <Route path="/login" element={<Login />} /> 
           <Route path="/register" element={<Register />} />
+          <Route path="/create-team" element={<CreateTeam />} />
           <Route
   path="/forgot-password"
   element={<ForgotPassword />}
@@ -46,11 +51,14 @@ function App() {
   path="/dashboard"
   element={<StudentDashboard />}
 />
+        <Route path="/teams" element={<MyTeams />} />
         <Route path="/profile" element={<StudentProfile />} />
+        <Route path="/student/:id" element={<StudentPublicProfile />} />
         <Route
   path="/find-teammates"
   element={<FindTeammates />}
 />
+    <Route path="/teams/:id" element={<TeamDetails />} />
         </Routes>
       </div>
     </BrowserRouter>

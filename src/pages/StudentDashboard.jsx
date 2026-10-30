@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import "./StudentDashboard.css";
 
@@ -23,7 +22,7 @@ const teamOptions = [
     description:
       "Start a hackathon team or create an independent project and invite students.",
     action: "Create a team",
-    link: "/teams/create",
+    link: "/create-team",
   },
 ];
 
@@ -59,6 +58,7 @@ function StudentDashboard() {
           <Link to="/invitations" className="dashboard-nav-link">
             <span>✉</span> Requests & invitations
           </Link>
+          
         </nav>
 
         <div className="dashboard-sidebar-bottom">

@@ -1,0 +1,315 @@
+
+/* Clean Public Student Profile */
+
+.public-profile-page {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 42px 24px 80px;
+  background: #0e1321;
+  color: #edf1ff;
+}
+
+.public-profile-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Back Navigation */
+
+.public-profile-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 35px;
+  color: #aebcff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.2s ease;
+}
+
+.public-profile-back:hover {
+  color: #ffffff;
+}
+
+/* Profile Header */
+
+.public-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 0 38px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(160, 175, 255, 0.17);
+}
+
+.public-profile-avatar {
+  width: 116px;
+  height: 116px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid rgba(155, 170, 255, 0.2);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6579e8, #9b78d8);
+  color: #ffffff;
+  font-size: 35px;
+  font-weight: 700;
+}
+
+.public-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.public-profile-identity h1 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 31px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+
+.public-profile-academic {
+  margin: 0 0 15px;
+  color: #aebbd5;
+  font-size: 15px;
+}
+
+.public-profile-status {
+  display: inline-block;
+  padding: 7px 13px;
+  border: 1px solid rgba(140, 160, 255, 0.25);
+  border-radius: 30px;
+  background: rgba(110, 130, 255, 0.12);
+  color: #bdc8ff;
+  font-size: 12px;
+}
+
+/* Profile Sections */
+
+.public-profile-section {
+  padding: 27px 0;
+  border-bottom: 1px solid rgba(160, 175, 255, 0.14);
+}
+
+.public-profile-section h2 {
+  margin: 0 0 17px;
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+
+.public-profile-section > p {
+  margin: 0;
+  color: #bdc7dc;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.public-profile-muted {
+  color: #7f8ba7 !important;
+  font-size: 13px !important;
+}
+
+/* Skills, Interests and Preferences */
+
+.public-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.public-profile-tags span {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 13px;
+  border: 1px solid rgba(145, 162, 255, 0.2);
+  border-radius: 7px;
+  background: rgba(108, 128, 255, 0.09);
+  color: #cbd3ff;
+  font-size: 12px;
+}
+
+/* Section Heading */
+
+.public-profile-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 5px;
+}
+
+.public-profile-heading h2 {
+  margin-bottom: 12px;
+}
+
+.public-profile-heading > span {
+  color: #8f9ec4;
+  font-size: 12px;
+}
+
+/* Projects */
+
+.public-profile-project-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.public-profile-project {
+  padding: 21px 0;
+  border-bottom: 1px solid rgba(160, 175, 255, 0.1);
+}
+
+.public-profile-project:last-child {
+  border-bottom: none;
+  padding-bottom: 5px;
+}
+
+.public-profile-project-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.public-profile-project-title h3 {
+  margin: 0;
+  color: #e8ecff;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.public-profile-project-status {
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: rgba(120, 140, 255, 0.12);
+  color: #bdc8ff;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.public-profile-project > p {
+  margin: 8px 0;
+  color: #aebbd5;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.public-profile-project-role strong {
+  color: #dce3ff;
+}
+
+.public-profile-project .public-profile-tags {
+  margin-top: 13px;
+}
+
+/* Experience, Achievements and Certifications */
+
+.public-profile-section > p + p {
+  margin-top: 10px;
+}
+
+/* Social Links */
+
+.public-profile-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: 27px;
+}
+
+.public-profile-socials a {
+  color: #aebcff;
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.public-profile-socials a:hover {
+  color: #ffffff;
+}
+
+/* Empty Profile */
+
+.public-profile-empty {
+  max-width: 600px;
+  margin: 60px auto;
+  padding: 45px 30px;
+  border: 1px solid rgba(160, 175, 255, 0.14);
+  border-radius: 14px;
+  background: #171e30;
+  text-align: center;
+}
+
+.public-profile-empty h2 {
+  margin: 0 0 12px;
+  color: #ffffff;
+}
+
+.public-profile-empty p {
+  color: #bdc7dc;
+}
+
+.public-profile-empty a {
+  display: inline-block;
+  margin-top: 18px;
+  color: #bdc8ff;
+  text-decoration: none;
+}
+
+/* Responsive */
+
+@media (max-width: 650px) {
+  .public-profile-page {
+    padding: 28px 18px 55px;
+  }
+
+  .public-profile-header {
+    align-items: flex-start;
+    gap: 18px;
+    padding-bottom: 27px;
+  }
+
+  .public-profile-avatar {
+    width: 82px;
+    height: 82px;
+    font-size: 25px;
+  }
+
+  .public-profile-identity h1 {
+    font-size: 23px;
+  }
+
+  .public-profile-academic {
+    font-size: 13px;
+  }
+
+  .public-profile-section {
+    padding: 23px 0;
+  }
+
+  .public-profile-project-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 9px;
+  }
+}
+
+@media (max-width: 420px) {
+  .public-profile-header {
+    flex-direction: column;
+  }
+
+  .public-profile-avatar {
+    width: 90px;
+    height: 90px;
+  }
+}
