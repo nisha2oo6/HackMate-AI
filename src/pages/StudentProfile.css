@@ -1266,3 +1266,210 @@
     gap: 10px;
   }
 }
+
+/* =========================================
+   TEAM PARTICIPATION
+========================================= */
+
+.profile-team-participation {
+  margin-top: 30px;
+  padding: 27px 0 30px;
+  border-top: 1px solid rgba(139, 158, 195, 0.14);
+  border-bottom: 1px solid rgba(139, 158, 195, 0.14);
+}
+
+.profile-team-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-team-card {
+  display: flex;
+  gap: 22px;
+  padding: 22px 0;
+  border-top: 1px solid rgba(139, 158, 195, 0.12);
+}
+
+.profile-team-card:first-child {
+  border-top: none;
+}
+
+.profile-team-index {
+  flex-shrink: 0;
+  padding-top: 3px;
+  color: #7785c9;
+  font-size: 12px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-team-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-team-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 15px;
+}
+
+.profile-team-heading h3 {
+  margin: 0;
+  color: #eef2ff;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.profile-team-role {
+  padding: 5px 9px;
+  border: 1px solid rgba(118, 140, 190, 0.25);
+  border-radius: 5px;
+  background: rgba(25, 37, 63, 0.65);
+  color: #bfcaff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.profile-team-category {
+  margin: 9px 0;
+  color: #a99be8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.profile-team-detail,
+.profile-team-description {
+  margin: 7px 0 0;
+  color: #a8b5cc;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.profile-team-detail strong {
+  color: #d2dcf0;
+  font-weight: 650;
+}
+
+.profile-team-empty {
+  padding: 24px 18px;
+  border: 1px dashed rgba(139, 158, 195, 0.25);
+  border-radius: 9px;
+  background: rgba(25, 37, 63, 0.25);
+}
+
+.profile-team-empty p {
+  margin: 0 0 7px;
+  color: #dce4f5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-team-empty span {
+  color: #8998b5;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .profile-team-card {
+    gap: 13px;
+  }
+
+  .profile-team-heading {
+    align-items: flex-start;
+  }
+
+  .profile-team-heading h3 {
+    font-size: 15px;
+  }
+}
+
+/* Current Team Participation */
+
+.profile-team-participation {
+  margin-top: 48px;
+}
+
+.profile-team-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.profile-team-card {
+  display: flex;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.profile-team-index {
+  color: #91a9d9;
+  font-size: 14px;
+  font-weight: 700;
+  padding-top: 3px;
+}
+
+.profile-team-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-team-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.profile-team-heading h3 {
+  margin: 0;
+}
+
+.profile-team-role {
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  background: rgba(145, 169, 217, 0.12);
+  color: #b8c9ee;
+}
+
+.profile-team-category {
+  display: inline-block;
+  margin-top: 9px;
+  font-size: 12px;
+  color: #91a9d9;
+}
+
+.profile-team-detail {
+  margin: 12px 0 0;
+}
+
+.profile-team-description {
+  margin: 10px 0 0;
+  color: #aab4c7;
+  line-height: 1.6;
+}
+
+.profile-team-empty {
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #aab4c7;
+}
+
+@media (max-width: 600px) {
+  .profile-team-card {
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .profile-team-heading {
+    align-items: flex-start;
+  }
+}

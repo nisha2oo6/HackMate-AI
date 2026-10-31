@@ -1,13 +1,77 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { students } from "./FindTeammates";
 import "./CreateTeam.css";
+import { CURRENT_STUDENT_ID } from "../data/currentStudent";
+
+// Clean extra spaces while preserving the official name's capitalization.
+const cleanEventName = (name) => {
+  return name.trim().replace(/\s+/g, " ");
+};
+
+// Generate a consistent internal identity for event comparison.
+const normalizeEventName = (name) => {
+  return cleanEventName(name).toLowerCase().replace(/[^a-z0-9]/g, "");
+};
+
+// Map known event abbreviations and alternative names to one identity.
+const EVENT_ALIASES = {
+  sih: "smartindiahackathon",
+  smartindiahackathon: "smartindiahackathon",
+};
+
+// Return the canonical event name used for comparison.
+const getCanonicalEventName = (name) => {
+  const normalizedName = normalizeEventName(name);
+  return EVENT_ALIASES[normalizedName] || normalizedName;
+};
+
+// Generate a consistent event identity using its name and year.
+const getEventKey = (name, year) => {
+  return `${getCanonicalEventName(name)}-${year.trim()}`;
+};
+
+// Check whether a student is an accepted member of a team.
+const isAcceptedMember = (team, studentId) => {
+  return (team.members || []).some(
+    (member) =>
+      Number(member.studentId) === Number(studentId) &&
+      member.status?.toLowerCase() === "accepted"
+  );
+};
+
+// Get the event identity from an existing team.
+// Supports both newer records and older records with only eventKey.
+const getExistingTeamEventKey = (team) => {
+  if (team.eventName) {
+    return getEventKey(
+      team.eventName,
+      String(team.eventYear || "")
+    );
+  }
+
+  if (team.eventKey) {
+    const separatorIndex = team.eventKey.lastIndexOf("-");
+
+    if (separatorIndex === -1) {
+      return team.eventKey;
+    }
+
+    const existingName = team.eventKey.slice(0, separatorIndex);
+    const existingYear = team.eventKey.slice(separatorIndex + 1);
+
+    return getEventKey(existingName, existingYear);
+  }
+
+  return "";
+};
 
 function CreateTeam() {
   const [teamType, setTeamType] = useState("event");
   const [teamName, setTeamName] = useState("");
   const [eventName, setEventName] = useState("");
+  const [eventYear, setEventYear] = useState("");
   const [description, setDescription] = useState("");
   const [requiredSkills, setRequiredSkills] = useState("");
   const [teamSize, setTeamSize] = useState("4");
@@ -18,10 +82,26 @@ function CreateTeam() {
   const [copyMessage, setCopyMessage] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
 
+  // Reference to the error message for automatic scrolling.
+  const errorRef = useRef(null);
+
+  // Automatically scroll to the error message whenever an error occurs.
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [error]);
+
   const maxMembers = Number(teamSize);
   const availableSlots = maxMembers - 1;
 
-  // Search students by name, department, skills or interests
+  const cleanedEventName = cleanEventName(eventName);
+  const cleanedEventYear = eventYear.trim();
+
+  // Search students by name, department, skills or interests.
   const filteredStudents = students.filter((student) => {
     const search = studentSearch.trim().toLowerCase();
 
@@ -39,7 +119,7 @@ function CreateTeam() {
     );
   });
 
-  // Select or deselect teammates
+  // Select or deselect teammates.
   const toggleMember = (studentId) => {
     setSelectedMembers((previous) => {
       if (previous.includes(studentId)) {
@@ -59,7 +139,7 @@ function CreateTeam() {
     });
   };
 
-  // Create team
+  // Create team.
   const handleCreateTeam = (event) => {
     event.preventDefault();
 
@@ -68,14 +148,61 @@ function CreateTeam() {
       return;
     }
 
-    if (teamType === "event" && !eventName.trim()) {
-      setError("Please enter the event or hackathon name.");
+    if (teamType === "event" && !cleanedEventName) {
+      setError("Please enter the official event or hackathon name.");
+      return;
+    }
+
+    if (teamType === "event" && !cleanedEventYear) {
+      setError("Please enter the event year or edition.");
+      return;
+    }
+
+    if (
+      teamType === "event" &&
+      (!/^\d{4}$/.test(cleanedEventYear) ||
+        Number(cleanedEventYear) < 2000 ||
+        Number(cleanedEventYear) > 2100)
+    ) {
+      setError("Please enter a valid event year between 2000 and 2100.");
       return;
     }
 
     if (!description.trim()) {
       setError("Please provide a short team description.");
       return;
+    }
+
+    // Read existing teams before creating a new one.
+    const existingTeams = JSON.parse(
+      localStorage.getItem("hackmateTeams") || "[]"
+    );
+
+    // Prevent the leader from creating another team
+    // for an event they already belong to.
+    if (teamType === "event") {
+      const currentEventKey = getEventKey(
+        cleanedEventName,
+        cleanedEventYear
+      );
+
+      const alreadyInEventTeam = existingTeams.some((team) => {
+        if (team.type !== "event") return false;
+
+        const existingEventKey = getExistingTeamEventKey(team);
+
+        return (
+          existingEventKey === currentEventKey &&
+          isAcceptedMember(team, CURRENT_STUDENT_ID)
+        );
+      });
+
+      if (alreadyInEventTeam) {
+        setError(
+          `You are already a member of a team for ${cleanedEventName} — ${cleanedEventYear}. You cannot create another team for the same event edition.`
+        );
+        return;
+      }
     }
 
     const inviteCode = Math.random().toString(36).substring(2, 10);
@@ -89,34 +216,51 @@ function CreateTeam() {
         status: "Pending",
       }));
 
+    const leader = students.find(
+      (student) => student.id === CURRENT_STUDENT_ID
+    );
+
     const team = {
       id: Date.now(),
       inviteCode,
       type: teamType,
       name: teamName.trim(),
-      eventName: teamType === "event" ? eventName.trim() : "",
+
+      eventName:
+        teamType === "event" ? cleanedEventName : "",
+
+      eventYear:
+        teamType === "event" ? cleanedEventYear : "",
+
+      eventKey:
+        teamType === "event"
+          ? getEventKey(cleanedEventName, cleanedEventYear)
+          : "",
+
       description: description.trim(),
+
       skills: requiredSkills
         .split(",")
         .map((skill) => skill.trim())
         .filter(Boolean),
+
       teamSize: maxMembers,
-      leader: "You",
+
+      leader: leader?.name,
+
       members: [
         {
-          name: "You",
+          studentId: CURRENT_STUDENT_ID,
+          name: leader?.name,
           status: "Accepted",
           role: "Leader",
         },
       ],
+
       invitations,
     };
 
-        // Save the created team in browser storage
-    const existingTeams = JSON.parse(
-      localStorage.getItem("hackmateTeams") || "[]"
-    );
-
+    // Save the created team in browser storage.
     localStorage.setItem(
       "hackmateTeams",
       JSON.stringify([...existingTeams, team])
@@ -128,12 +272,12 @@ function CreateTeam() {
     setError("");
   };
 
-  // Generate invitation link
+  // Generate invitation link.
   const inviteLink = createdTeam
     ? `${window.location.origin}/join/team/${createdTeam.inviteCode}`
     : "";
 
-  // Copy invitation link
+  // Copy invitation link.
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(inviteLink);
@@ -145,7 +289,7 @@ function CreateTeam() {
     }
   };
 
-  // Team creation success screen
+  // Team creation success screen.
   if (createdTeam && !showReview) {
     return (
       <div className="ct-page">
@@ -173,6 +317,15 @@ function CreateTeam() {
                   : "Project Team"}
               </strong>
             </div>
+
+            {createdTeam.type === "event" && (
+              <div className="ct-summary-row">
+                <span>Event</span>
+                <strong>
+                  {createdTeam.eventName.toUpperCase()} — {createdTeam.eventYear}
+                </strong>
+              </div>
+            )}
 
             <div className="ct-summary-row">
               <span>Team Capacity</span>
@@ -209,7 +362,7 @@ function CreateTeam() {
     );
   }
 
-  // Team review screen
+  // Team review screen.
   if (createdTeam && showReview) {
     return (
       <div className="ct-page">
@@ -222,7 +375,7 @@ function CreateTeam() {
 
               <p>
                 {createdTeam.type === "event"
-                  ? createdTeam.eventName
+                  ? `${createdTeam.eventName.toUpperCase()} — ${createdTeam.eventYear}`
                   : "Independent Project Team"}
               </p>
             </div>
@@ -293,7 +446,7 @@ function CreateTeam() {
 
             <p className="ct-review-note">
               Students become team members only after accepting their
-              invitations. Pending invitations reserve team capacity.
+              invitations. Pending invitations do not reserve team capacity.
             </p>
           </div>
 
@@ -329,7 +482,7 @@ function CreateTeam() {
     );
   }
 
-  // Main Create Team screen - Original two-column design
+  // Main Create Team screen - Original two-column design.
   return (
     <div className="ct-page">
       <div className="ct-header">
@@ -341,12 +494,17 @@ function CreateTeam() {
           Bring together the right people and turn your ideas into something
           meaningful.
         </p>
+
+        {error && (
+          <p className="ct-error" role="alert" ref={errorRef}>
+            {error}
+          </p>
+        )}
       </div>
 
       <form className="ct-layout" onSubmit={handleCreateTeam}>
         {/* LEFT SIDE */}
         <div className="ct-main">
-
           {/* Team Information */}
           <section className="ct-section">
             <div className="ct-section-heading">
@@ -415,19 +573,46 @@ function CreateTeam() {
             </div>
 
             {teamType === "event" && (
-              <div className="ct-field">
-                <label htmlFor="eventName">
-                  Event / Hackathon Name
-                </label>
+              <>
+                <div className="ct-field">
+                  <label htmlFor="eventName">
+                    Official Event / Hackathon Name
+                  </label>
 
-                <input
-                  id="eventName"
-                  type="text"
-                  placeholder="Enter the event name"
-                  value={eventName}
-                  onChange={(event) => setEventName(event.target.value)}
-                />
-              </div>
+                  <input
+                    id="eventName"
+                    type="text"
+                    placeholder="Example: Smart India Hackathon"
+                    value={eventName}
+                    onChange={(event) => setEventName(event.target.value)}
+                  />
+
+                  <small>
+                    Enter the complete official event name with correct
+                    spelling and spacing. Avoid abbreviations.
+                  </small>
+                </div>
+
+                <div className="ct-field">
+                  <label htmlFor="eventYear">
+                    Event Year / Edition
+                  </label>
+
+                  <input
+                    id="eventYear"
+                    type="number"
+                    min="2000"
+                    max="2100"
+                    placeholder="Example: 2026"
+                    value={eventYear}
+                    onChange={(event) => setEventYear(event.target.value)}
+                  />
+
+                  <small>
+                    Enter the year of the event you are participating in.
+                  </small>
+                </div>
+              </>
             )}
 
             <div className="ct-field">
@@ -563,12 +748,12 @@ function CreateTeam() {
                       </label>
 
                       <Link
-  to={`/student/${member.id}`}
-  state={{ from: "/create-team" }}
-  className="ct-view-profile-link"
->
-  View Profile
-</Link>
+                        to={`/student/${member.id}`}
+                        state={{ from: "/create-team" }}
+                        className="ct-view-profile-link"
+                      >
+                        View Profile
+                      </Link>
 
                       <span className="ct-select-label">
                         {selected ? "Selected" : "Select"}
@@ -583,8 +768,6 @@ function CreateTeam() {
               )}
             </div>
           </section>
-
-          {error && <p className="ct-error">{error}</p>}
         </div>
 
         {/* RIGHT SIDE - TEAM OVERVIEW */}
@@ -596,7 +779,11 @@ function CreateTeam() {
 
             <p>
               {teamType === "event"
-                ? eventName.trim() || "Event / Hackathon Team"
+                ? cleanedEventName
+                  ? `${cleanedEventName.toUpperCase()}${
+                      cleanedEventYear ? ` — ${cleanedEventYear}` : ""
+                    }`
+                  : "Event / Hackathon Team"
                 : "Independent Project Team"}
             </p>
 

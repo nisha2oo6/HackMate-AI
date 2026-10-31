@@ -2,35 +2,76 @@
 import "./StudentProfile.css";
 import { useState } from "react";
 
+// Temporary logged-in student ID for the frontend prototype.
+// Arun Kumar has student ID 1 in hackmateTeams.
+const CURRENT_STUDENT_ID = 1;
+
+// Get the student's accepted team participations from Local Storage.
+function getStudentTeamParticipation(studentId) {
+  try {
+    const savedTeams = JSON.parse(
+      localStorage.getItem("hackmateTeams") || "[]"
+    );
+
+    if (!Array.isArray(savedTeams)) return [];
+
+    return savedTeams
+      .filter((team) =>
+        Array.isArray(team.members) &&
+        team.members.some(
+          (member) =>
+            String(member.studentId) === String(studentId) &&
+            String(member.status || "").toLowerCase() === "accepted"
+        )
+      )
+      .map((team) => {
+        const member = team.members.find(
+          (item) =>
+            String(item.studentId) === String(studentId) &&
+            String(item.status || "").toLowerCase() === "accepted"
+        );
+
+        const isEventTeam =
+          team.type === "event" || team.type === "hackathon";
+
+        return {
+          id: team.id,
+          teamName: team.name || "Unnamed Team",
+          type: isEventTeam ? "Event Team" : "Independent Project",
+          eventName: team.eventName || "",
+          eventYear: team.eventYear || "",
+          projectName: team.projectName || team.name || "",
+          description: team.description || "",
+          role: member?.role || "Member",
+        };
+      });
+  } catch (error) {
+    console.error("Unable to load team participation:", error);
+    return [];
+  }
+}
+
 function StudentProfile() {
   const [student, setStudent] = useState({
     profileImage: "",
-    name: "Alex Morgan",
-    department: "Computer Science Engineering",
+    name: "Arun Kumar",
+    department: "CSE",
     year: "3rd Year",
     section: "Section A",
 
-    bio: "I am a computer science student interested in building practical software solutions and exploring how technology can solve real-world problems. I enjoy frontend and backend development, learning new technologies, and collaborating with people from different technical backgrounds. I am looking to strengthen my problem-solving skills through meaningful projects, hackathons, and team-based innovation.",
-
-    collaborationStatus: "Looking for a Team",
+    bio: "Backend developer interested in building scalable applications and solving real-world problems.",
 
     skills: [
       "Java",
-      "Data Structures",
-      "React",
-      "JavaScript",
-      "HTML & CSS",
+      "Spring Boot",
       "MySQL",
-      "Git & GitHub",
+      "REST API",
     ],
 
     interests: [
-      "Full-Stack Development",
-      "Artificial Intelligence",
-      "Machine Learning",
+      "Web Development",
       "Hackathons",
       "Problem Solving",
-      "Real-World Projects",
     ],
 
     projects: [
@@ -104,6 +145,11 @@ function StudentProfile() {
   // Project editor state
   const [projectDraft, setProjectDraft] = useState(null);
   const [editingProjectIndex, setEditingProjectIndex] = useState(null);
+
+  // Get current team participation
+  const teamParticipation = getStudentTeamParticipation(
+    CURRENT_STUDENT_ID
+  );
 
   // Open the profile editor
   const openEditProfile = () => {
@@ -330,7 +376,7 @@ function StudentProfile() {
     <main className="student-profile-page">
       <div className="student-profile-container">
 
-        {/* Profile header */}
+        {/* 01. Profile header */}
         <header className="profile-intro">
           <div className="profile-identity">
             {renderAvatar(
@@ -355,11 +401,6 @@ function StudentProfile() {
               <div className="profile-extra-details">
                 <span>{student.section}</span>
               </div>
-
-              <span className="profile-collaboration-status">
-                <span className="profile-status-dot" />
-                {student.collaborationStatus}
-              </span>
             </div>
           </div>
 
@@ -372,7 +413,7 @@ function StudentProfile() {
           </button>
         </header>
 
-        {/* About me */}
+        {/* 02. About me */}
         <section className="profile-about">
           <h2 className="profile-section-heading">About Me</h2>
 
@@ -408,7 +449,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Skills and interests */}
+        {/* 03. Technical skills */}
         <section className="profile-capabilities">
           <div className="profile-capability-group">
             <span className="profile-label">TECHNICAL SKILLS</span>
@@ -422,6 +463,7 @@ function StudentProfile() {
             </div>
           </div>
 
+          {/* 04. Areas of interest */}
           <div className="profile-capability-group">
             <span className="profile-label">AREAS OF INTEREST</span>
 
@@ -438,7 +480,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Projects */}
+        {/* 05. Projects */}
         <section className="profile-projects">
           <div className="profile-heading">
             <div>
@@ -546,7 +588,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Experience */}
+        {/* 06. Experience */}
         <section className="profile-experience">
           <div className="profile-heading">
             <div>
@@ -577,7 +619,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Achievements and certifications */}
+        {/* 07. Achievements and certifications */}
         <section className="profile-additional">
           <div className="profile-additional-group">
             <h2>Achievements and Recognition</h2>
@@ -611,7 +653,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Collaboration preferences */}
+        {/* 08. Collaboration preferences */}
         <section className="profile-collaboration">
           <span className="profile-eyebrow">TEAM COMPATIBILITY</span>
 
@@ -636,7 +678,75 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* Social links */}
+        {/* 09. Current team participation */}
+        <section className="profile-team-participation">
+          <div className="profile-heading">
+            <div>
+              <span className="profile-eyebrow">
+                CURRENT COLLABORATIONS
+              </span>
+              <h2>Team Participation</h2>
+            </div>
+
+            <span className="profile-project-count">
+              {String(teamParticipation.length).padStart(2, "0")} teams
+            </span>
+          </div>
+
+          {teamParticipation.length > 0 ? (
+            <div className="profile-team-list">
+              {teamParticipation.map((team, index) => (
+                <article
+                  className="profile-team-card"
+                  key={team.id}
+                >
+                  <div className="profile-team-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+
+                  <div className="profile-team-content">
+                    <div className="profile-team-heading">
+                      <h3>{team.teamName}</h3>
+
+                      <span className="profile-team-role">
+                        {team.role}
+                      </span>
+                    </div>
+
+                    <span className="profile-team-category">
+                      {team.type}
+                    </span>
+
+                    {team.type === "Event Team" ? (
+                      <p className="profile-team-detail">
+                        <strong>Event:</strong>{" "}
+                        {team.eventName || "Event name not specified"}
+                        {team.eventYear && ` · ${team.eventYear}`}
+                      </p>
+                    ) : (
+                      <p className="profile-team-detail">
+                        <strong>Project:</strong>{" "}
+                        {team.projectName || team.teamName}
+                      </p>
+                    )}
+
+                    {team.description && (
+                      <p className="profile-team-description">
+                        {team.description}
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="profile-team-empty">
+              No current team participation.
+            </div>
+          )}
+        </section>
+
+        {/* Connect and collaborate */}
         <footer className="profile-footer">
           <div className="profile-footer-copy">
             <span className="profile-eyebrow">

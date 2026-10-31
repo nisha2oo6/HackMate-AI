@@ -19,6 +19,7 @@ import CreateTeam from "./pages/CreateTeam";
 import StudentPublicProfile from "./pages/StudentPublicProfile";
 import MyTeams from "./pages/MyTeams";
 import TeamDetails from "./pages/TeamDetails";
+import Invitations from "./pages/Invitations";
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -59,6 +60,7 @@ function App() {
   element={<FindTeammates />}
 />
     <Route path="/teams/:id" element={<TeamDetails />} />
+    <Route path="/invitations" element={<Invitations />} />
         </Routes>
       </div>
     </BrowserRouter>

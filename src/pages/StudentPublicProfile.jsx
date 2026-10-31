@@ -1,19 +1,72 @@
+
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { students } from "./FindTeammates";
 import "./StudentProfile.css";
 
+// Read the teams currently saved by HackMate AI.
+function getStudentTeamParticipation(studentId) {
+  try {
+    const savedTeams = JSON.parse(
+      localStorage.getItem("hackmateTeams") || "[]"
+    );
+
+    if (!Array.isArray(savedTeams)) return [];
+
+    return savedTeams
+      .filter((team) => {
+        const members = Array.isArray(team.members) ? team.members : [];
+
+        return members.some(
+          (member) =>
+            String(member.studentId) === String(studentId) &&
+            String(member.status || "").toLowerCase() === "accepted"
+        );
+      })
+      .map((team) => {
+        const members = Array.isArray(team.members) ? team.members : [];
+
+        const member = members.find(
+          (item) =>
+            String(item.studentId) === String(studentId) &&
+            String(item.status || "").toLowerCase() === "accepted"
+        );
+
+        const teamType = String(team.type || "").toLowerCase();
+        const isEventTeam =
+          teamType === "event" ||
+          teamType === "hackathon" ||
+          Boolean(team.eventName);
+
+        return {
+          id: team.id || team.teamId || team.name,
+          teamName: team.name || "Unnamed Team",
+          category: isEventTeam ? "Event Team" : "Independent Project",
+          eventName: team.eventName || "",
+          eventYear: team.eventYear || "",
+          projectName: team.projectName || team.projectTitle || "",
+          role: member?.role || "Member",
+          description: team.description || "",
+        };
+      });
+  } catch (error) {
+    console.error("Unable to read team participation:", error);
+    return [];
+  }
+}
+
 function StudentPublicProfile() {
   const { id } = useParams();
   const location = useLocation();
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const handleBack = () => {
-  if (window.history.state?.idx > 0) {
-    navigate(-1);
-  } else {
-    navigate(location.state?.from || "/find-teammates");
-  }
-};
+  const handleBack = () => {
+    if (window.history.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate(location.state?.from || "/find-teammates");
+    }
+  };
+
   const student = students.find(
     (item) => item.id === Number(id)
   );
@@ -39,11 +92,6 @@ const handleBack = () => {
 
   const preferences = student.collaborationPreferences || [];
 
-  const collaborationStatus =
-    student.collaborationStatus ||
-    student.availability ||
-    "Status not specified";
-
   const collaborationDescription =
     student.collaboration?.lookingFor ||
     student.collaborationDescription ||
@@ -52,6 +100,9 @@ const handleBack = () => {
   const preferredAreas =
     student.collaboration?.preferredAreas ||
     preferences;
+
+  // Only accepted team memberships are displayed.
+  const teamParticipation = getStudentTeamParticipation(student.id);
 
   const renderAvatar = () => (
     <div className="profile-avatar">
@@ -84,14 +135,14 @@ const handleBack = () => {
 
         {/* Back navigation */}
         <button
-  type="button"
-  onClick={handleBack}
-  className="public-profile-back-link"
->
-  ← Go Back
-</button>
+          type="button"
+          onClick={handleBack}
+          className="public-profile-back-link"
+        >
+          ← Go Back
+        </button>
 
-        {/* Profile Header */}
+        {/* 01. Profile Header */}
         <header className="profile-intro">
           <div className="profile-identity">
             {renderAvatar()}
@@ -114,16 +165,11 @@ const handleBack = () => {
                   <span>{student.section}</span>
                 )}
               </div>
-
-              <span className="profile-collaboration-status">
-                <span className="profile-status-dot" />
-                {collaborationStatus}
-              </span>
             </div>
           </div>
         </header>
 
-        {/* About Me */}
+        {/* 02. About Me */}
         <section className="profile-about">
           <h2 className="profile-section-heading">
             About Me
@@ -163,7 +209,7 @@ const handleBack = () => {
           </div>
         </section>
 
-        {/* Skills and Interests */}
+        {/* 03. Technical Skills and 04. Areas of Interest */}
         <section className="profile-capabilities">
 
           <div className="profile-capability-group">
@@ -210,7 +256,7 @@ const handleBack = () => {
 
         </section>
 
-        {/* Projects */}
+        {/* 05. Projects */}
         <section className="profile-projects">
           <div className="profile-heading">
             <div>
@@ -294,7 +340,7 @@ const handleBack = () => {
           </div>
         </section>
 
-        {/* Experience */}
+        {/* 06. Experience */}
         <section className="profile-experience">
           <div className="profile-heading">
             <div>
@@ -336,7 +382,7 @@ const handleBack = () => {
           </div>
         </section>
 
-        {/* Achievements and Certifications */}
+        {/* 07. Achievements and Certifications */}
         <section className="profile-additional">
 
           <div className="profile-additional-group">
@@ -382,7 +428,7 @@ const handleBack = () => {
 
         </section>
 
-        {/* Collaboration Preferences */}
+        {/* 08. Team Compatibility */}
         <section className="profile-collaboration">
           <span className="profile-eyebrow">
             TEAM COMPATIBILITY
@@ -419,7 +465,78 @@ const handleBack = () => {
           </div>
         </section>
 
-        {/* Social Links */}
+        {/* 09. Current Team Participation */}
+        <section className="profile-team-participation">
+          <div className="profile-heading">
+            <div>
+              <span className="profile-eyebrow">
+                CURRENT COLLABORATIONS
+              </span>
+              <h2>Team Participation</h2>
+            </div>
+
+            <span className="profile-project-count">
+              {String(teamParticipation.length).padStart(2, "0")} teams
+            </span>
+          </div>
+
+          {teamParticipation.length > 0 ? (
+            <div className="profile-team-list">
+              {teamParticipation.map((team, index) => (
+                <article
+                  className="profile-team-card"
+                  key={`${team.id}-${index}`}
+                >
+                  <div className="profile-team-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+
+                  <div className="profile-team-content">
+                    <div className="profile-team-heading">
+                      <h3>{team.teamName}</h3>
+
+                      <span className="profile-team-role">
+                        {team.role}
+                      </span>
+                    </div>
+
+                    <p className="profile-team-category">
+                      {team.category}
+                    </p>
+
+                    {team.category === "Event Team" ? (
+                      <p className="profile-team-detail">
+                        <strong>Event:</strong>{" "}
+                        {team.eventName || "Event name not specified"}
+                        {team.eventYear && ` · ${team.eventYear}`}
+                      </p>
+                    ) : (
+                      <p className="profile-team-detail">
+                        <strong>Project:</strong>{" "}
+                        {team.projectName || team.teamName}
+                      </p>
+                    )}
+
+                    {team.description && (
+                      <p className="profile-team-description">
+                        {team.description}
+                      </p>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="profile-team-empty">
+              <p>No current team participation.</p>
+              <span>
+                This student has not joined any team yet.
+              </span>
+            </div>
+          )}
+        </section>
+
+        {/* 10. Social Links */}
         <footer className="profile-footer">
           <div className="profile-footer-copy">
             <span className="profile-eyebrow">

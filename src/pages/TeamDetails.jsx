@@ -1,11 +1,20 @@
 
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { students } from "./FindTeammates";
+import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 import "./TeamDetails.css";
 
 function TeamDetails() {
   const { id } = useParams();
+  const location = useLocation();
+
+  const backPath = location.state?.from || "/teams";
+
+  const backText =
+    backPath === "/invitations"
+      ? "← Back to Requests & Invitations"
+      : "← Back to My Teams";
 
   const [team, setTeam] = useState(null);
   const [studentSearch, setStudentSearch] = useState("");
@@ -23,12 +32,32 @@ function TeamDetails() {
     setTeam(selectedTeam || null);
   }, [id]);
 
+  const members = team?.members || [];
+  const invitations = team?.invitations || [];
+
+  // Identify the current student as the team leader.
+  const isLeader = members.some(
+    (member) =>
+      member.studentId === CURRENT_STUDENT_ID &&
+      member.role === "Leader"
+  );
+
+  const isMember = members.some(
+    (member) => member.studentId === CURRENT_STUDENT_ID
+  );
+
   // Only accepted members count toward team capacity.
-  const acceptedCount = team?.members?.length || 0;
+  const acceptedCount = members.filter(
+    (member) => member.status === "Accepted"
+  ).length;
 
   const availableSlots = team
     ? Math.max(0, team.teamSize - acceptedCount)
     : 0;
+
+  const pendingInvitations = invitations.filter(
+    (item) => item.status === "Pending"
+  );
 
   // Search students by name, department or skill.
   const filteredStudents = students.filter((student) => {
@@ -47,16 +76,18 @@ function TeamDetails() {
 
   // Invite a student to the team.
   const handleInvite = (student) => {
+    if (!isLeader) return;
+
     if (availableSlots <= 0) {
       setMessage("Your team has reached its maximum capacity.");
       return;
     }
 
-    const alreadyMember = team.members.some(
+    const alreadyMember = members.some(
       (member) => member.studentId === student.id
     );
 
-    const alreadyInvited = team.invitations.some(
+    const alreadyInvited = invitations.some(
       (invitation) =>
         invitation.studentId === student.id &&
         invitation.status === "Pending"
@@ -72,8 +103,9 @@ function TeamDetails() {
     const updatedTeam = {
       ...team,
       invitations: [
-        ...team.invitations,
+        ...invitations,
         {
+          id: Date.now(),
           studentId: student.id,
           name: student.name,
           department: student.department,
@@ -114,16 +146,11 @@ function TeamDetails() {
     );
   }
 
-  const pendingInvitations = team.invitations.filter(
-    (item) => item.status === "Pending"
-  );
-
   return (
     <div className="td-page">
-      <Link to="/teams" className="td-back-link">
-        ← Back to My Teams
-      </Link>
-
+      <Link to={backPath} className="td-back-link">
+  {backText}
+</Link>
       <div className="td-header">
         <div>
           <span className="td-eyebrow">TEAM MANAGEMENT</span>
@@ -135,7 +162,13 @@ function TeamDetails() {
           </p>
         </div>
 
-        <span className="td-created-status">Created by You</span>
+        <span className="td-created-status">
+          {isLeader
+            ? "Team Leader"
+            : isMember
+              ? "Team Member"
+              : "Team Details"}
+        </span>
       </div>
 
       {/* Team statistics */}
@@ -162,7 +195,6 @@ function TeamDetails() {
       </div>
 
       <div className="td-content">
-
         {/* Team overview */}
         <section className="td-card">
           <h2>Team Overview</h2>
@@ -172,7 +204,7 @@ function TeamDetails() {
           <h3>Required Skills</h3>
 
           <div className="td-skills">
-            {team.skills.length > 0 ? (
+            {team.skills?.length > 0 ? (
               team.skills.map((skill, index) => (
                 <span key={index}>{skill}</span>
               ))
@@ -186,140 +218,151 @@ function TeamDetails() {
         <section className="td-card">
           <h2>Team Members</h2>
 
-          {team.members.map((member, index) => (
-            <div className="td-member" key={index}>
-              <div>
-                <strong>{member.name}</strong>
-                <span>{member.role || "Member"}</span>
-              </div>
+          {members
+            .filter((member) => member.status === "Accepted")
+            .map((member, index) => (
+              <div className="td-member" key={member.studentId || index}>
+                <div>
+                  <strong>{member.name}</strong>
+                  <span>{member.role || "Member"}</span>
+                </div>
 
-              <span className="td-accepted">
-                Accepted
-              </span>
-            </div>
-          ))}
+                <span className="td-accepted">Accepted</span>
+              </div>
+            ))}
         </section>
 
         {/* Pending invitations */}
-        <section className="td-card">
-          <h2>Pending Invitations</h2>
+        {isLeader && (
+          <section className="td-card">
+            <h2>Pending Invitations</h2>
 
-          {pendingInvitations.length > 0 ? (
-            pendingInvitations.map((invitation) => (
-              <div
-                className="td-member"
-                key={invitation.studentId}
-              >
-                <div>
-                  <strong>{invitation.name}</strong>
-                  <span>{invitation.department}</span>
+            {pendingInvitations.length > 0 ? (
+              pendingInvitations.map((invitation) => (
+                <div
+                  className="td-member"
+                  key={invitation.id || invitation.studentId}
+                >
+                  <div>
+                    <strong>{invitation.name}</strong>
+                    <span>{invitation.department}</span>
+                  </div>
+
+                  <span className="td-pending">Pending</span>
                 </div>
+              ))
+            ) : (
+              <p>No pending invitations.</p>
+            )}
+          </section>
+        )}
 
-                <span className="td-pending">
-                  Pending
-                </span>
-              </div>
-            ))
-          ) : (
-            <p>No pending invitations.</p>
-          )}
-        </section>
+        {/* Invite more students - leader only */}
+        {isLeader && (
+          <section className="td-card td-invite-section">
+            <h2>Invite More Students</h2>
 
-        {/* Invite more students */}
-        <section className="td-card td-invite-section">
-          <h2>Invite More Students</h2>
+            <p>
+              Search for students and invite them to your team.
+              Pending invitations do not reserve team capacity.
+            </p>
 
-          <p>
-            Search for students and invite them to your team.
-            Pending invitations do not reserve team capacity.
-          </p>
+            <div className="td-capacity-info">
+              Available positions: <strong>{availableSlots}</strong>
+            </div>
 
-          <div className="td-capacity-info">
-            Available positions: <strong>{availableSlots}</strong>
-          </div>
+            {availableSlots > 0 ? (
+              <>
+                <input
+                  type="search"
+                  className="td-search"
+                  placeholder="Search by name, department or skill..."
+                  value={studentSearch}
+                  onChange={(event) =>
+                    setStudentSearch(event.target.value)
+                  }
+                />
 
-          {availableSlots > 0 ? (
-            <>
-              <input
-                type="search"
-                className="td-search"
-                placeholder="Search by name, department or skill..."
-                value={studentSearch}
-                onChange={(event) =>
-                  setStudentSearch(event.target.value)
-                }
-              />
-
-              <div className="td-invite-list">
-                {filteredStudents.filter((student) => {
-                  const isMember = team.members.some(
-                    (member) => member.studentId === student.id
-                  );
-
-                  const isPending = team.invitations.some(
-                    (invitation) =>
-                      invitation.studentId === student.id &&
-                      invitation.status === "Pending"
-                  );
-
-                  return !isMember && !isPending;
-                }).length > 0 ? (
-                  filteredStudents.map((student) => {
-                    const isMember = team.members.some(
+                <div className="td-invite-list">
+                  {filteredStudents.filter((student) => {
+                    const isAlreadyMember = members.some(
                       (member) => member.studentId === student.id
                     );
 
-                    const isPending = team.invitations.some(
+                    const isAlreadyInvited = invitations.some(
                       (invitation) =>
                         invitation.studentId === student.id &&
                         invitation.status === "Pending"
                     );
 
-                    if (isMember || isPending) return null;
-
                     return (
-                      <div
-                        className="td-invite-student"
-                        key={student.id}
-                      >
-                        <div>
-  <strong>{student.name}</strong>
-  <span>{student.department}</span>
-
-  <Link
-    to={`/student/${student.id}`}
-    state={{ from: `/teams/${team.id}` }}
-    className="td-view-profile-link"
-  >
-    View Profile →
-  </Link>
-</div>
-
-<button
-  type="button"
-  onClick={() => handleInvite(student)}
->
-  Invite
-</button>
-                      </div>
+                      student.id !== CURRENT_STUDENT_ID &&
+                      !isAlreadyMember &&
+                      !isAlreadyInvited
                     );
-                  })
-                ) : (
-                  <p>No eligible students found.</p>
-                )}
-              </div>
-            </>
-          ) : (
-            <p>
-              Your team is full. No more invitations can be sent.
-            </p>
-          )}
+                  }).length > 0 ? (
+                    filteredStudents.map((student) => {
+                      const isAlreadyMember = members.some(
+                        (member) => member.studentId === student.id
+                      );
 
-          {message && (
-            <p className="td-message">{message}</p>
-          )}
-        </section>
+                      const isAlreadyInvited = invitations.some(
+                        (invitation) =>
+                          invitation.studentId === student.id &&
+                          invitation.status === "Pending"
+                      );
 
+                      if (
+                        student.id === CURRENT_STUDENT_ID ||
+                        isAlreadyMember ||
+                        isAlreadyInvited
+                      ) {
+                        return null;
+                      }
+
+                      return (
+                        <div
+                          className="td-invite-student"
+                          key={student.id}
+                        >
+                          <div>
+                            <strong>{student.name}</strong>
+                            <span>{student.department}</span>
+
+                            <Link
+                              to={`/student/${student.id}`}
+                              state={{ from: `/teams/${team.id}` }}
+                              className="td-view-profile-link"
+                            >
+                              View Profile →
+                            </Link>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleInvite(student)}
+                          >
+                            Invite
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p>No eligible students found.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p>
+                Your team is full. No more invitations can be sent.
+              </p>
+            )}
+
+            {message && (
+              <p className="td-message">{message}</p>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );

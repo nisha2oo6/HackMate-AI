@@ -237,3 +237,30 @@
     grid-template-columns: 1fr;
   }
 }
+.mt-joined-empty {
+  width: 70%;
+  max-width: 750px;
+  margin: 10px 0 0;
+  padding: 18px 20px;
+}
+.mt-joined-empty .mt-empty-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.mt-joined-empty h3 {
+  font-size: 18px;
+}
+
+.mt-joined-empty p {
+  margin-bottom: 16px;
+}
+.mt-joined-empty {
+  width: 70%;
+  max-width: 750px;
+  margin: 10px auto 0;
+  padding: 18px 20px;
+}
+.mt-joined-section {
+  margin-top: 55px;
+}
