@@ -1,10 +1,11 @@
 
 import "./StudentProfile.css";
 import { useState } from "react";
-
-// Temporary logged-in student ID for the frontend prototype.
-// Arun Kumar has student ID 1 in hackmateTeams.
-const CURRENT_STUDENT_ID = 1;
+import {
+  getStudentById,
+  saveStudentProfile,
+} from "../data/students";
+import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 
 // Get the student's accepted team participations from Local Storage.
 function getStudentTeamParticipation(studentId) {
@@ -51,93 +52,178 @@ function getStudentTeamParticipation(studentId) {
   }
 }
 
-function StudentProfile() {
-  const [student, setStudent] = useState({
-    profileImage: "",
-    name: "Arun Kumar",
-    department: "CSE",
-    year: "3rd Year",
-    section: "Section A",
+// Convert shared student data into the format used by the profile UI.
+function prepareStudentProfile(student) {
+  return {
+    profileImage: student.profileImage || "",
+    name: student.name || "",
+    department: student.department || "",
+    year: student.year || "",
+    section: student.section?.startsWith("Section ")
+      ? student.section
+      : `Section ${student.section || ""}`,
 
-    bio: "Backend developer interested in building scalable applications and solving real-world problems.",
+    bio: student.bio || "",
 
-    skills: [
-      "Java",
-      "Spring Boot",
-      "MySQL",
-      "REST API",
-    ],
+    skills: student.skills || [],
+    interests: student.interests || [],
 
-    interests: [
-      "Web Development",
-      "Hackathons",
-      "Problem Solving",
-    ],
+    projects: (student.projects || []).map((project) => ({
+      title: project.title || project.name || "",
+      description: project.description || "",
+      role: project.role || "",
+      contribution: project.contribution || "",
+      technologies: project.technologies || [],
+      status: project.status || "Planned",
+    })),
 
-    projects: [
-      {
-        title: "Campus Connect",
-        description:
-          "A student-focused platform designed to help students discover opportunities, connect with peers, and collaborate on projects. The concept brings student information and collaboration activities into one accessible place.",
-        role: "Full-Stack Developer",
-        contribution:
-          "Working on the user interface, page navigation, reusable React components, and planned frontend-backend integration.",
-        technologies: ["React", "Java", "MySQL"],
-        status: "In Progress",
-      },
-      {
-        title: "Smart Task Planner",
-        description:
-          "A task management application designed to organize academic assignments, track priorities, and keep upcoming deadlines visible. The goal is to make it easier to manage multiple tasks and monitor progress.",
-        role: "Backend Developer",
-        contribution:
-          "Worked on the proposed data structure for tasks, task statuses, and the information required to manage task records.",
-        technologies: ["Java", "MySQL"],
-        status: "Completed",
-      },
-    ],
+    experience: (student.experience || []).map((item) =>
+      typeof item === "string"
+        ? {
+            title: item,
+            organization: "Independent Learning",
+            period: "Ongoing",
+            description: item,
+          }
+        : item
+    ),
 
-    experience: [
-      {
-        title: "Academic and Personal Development",
-        organization: "Independent Learning",
-        period: "Ongoing",
-        description:
-          "Developing programming fundamentals, practicing data structures and algorithms, and learning to build maintainable applications. Current learning areas include Java, React, database concepts, and version control.",
-      },
-    ],
+    achievements: student.achievements || [],
 
-    achievements: [
-      "Add verified hackathon participation and the event name.",
-      "Add awards, competition results, or project recognition.",
-      "Describe a technical challenge you solved and its impact.",
-    ],
+    certifications: (student.certifications || []).map((item) =>
+      typeof item === "string"
+        ? { name: item, issuer: "" }
+        : item
+    ),
 
-    certifications: [
-      {
-        name: "Java Programming",
-        issuer: "Example certification — replace with actual details",
-      },
-      {
-        name: "Web Development",
-        issuer: "Example certification — replace with actual details",
-      },
-    ],
-
-    collaboration: {
+    collaboration: student.collaboration || {
       lookingFor:
         "I enjoy working with teammates who share ideas, communicate openly, and contribute consistently toward building useful projects.",
-      preferredAreas: [
-        "Web Development",
-        "AI & ML",
-        "Backend Development",
-      ],
+      preferredAreas: student.collaborationPreferences || [],
     },
 
-    github: "https://github.com/your-username",
-    linkedin: "https://www.linkedin.com/in/your-username",
-    portfolio: "",
-  });
+    github: student.github || "",
+    linkedin: student.linkedin || "",
+    portfolio: student.portfolio || "",
+  };
+}
+
+// Arun's original detailed profile.
+// This is preserved rather than replacing it with the shorter sample record.
+const ARUN_DEFAULT_PROFILE = {
+  profileImage: "",
+  name: "Arun Kumar",
+  department: "CSE",
+  year: "3rd Year",
+  section: "Section A",
+
+  bio: "Backend developer interested in building scalable applications and solving real-world problems.",
+
+  skills: [
+    "Java",
+    "Spring Boot",
+    "MySQL",
+    "REST API",
+  ],
+
+  interests: [
+    "Web Development",
+    "Hackathons",
+    "Problem Solving",
+  ],
+
+  projects: [
+    {
+      title: "Campus Connect",
+      description:
+        "A student-focused platform designed to help students discover opportunities, connect with peers, and collaborate on projects. The concept brings student information and collaboration activities into one accessible place.",
+      role: "Full-Stack Developer",
+      contribution:
+        "Working on the user interface, page navigation, reusable React components, and planned frontend-backend integration.",
+      technologies: ["React", "Java", "MySQL"],
+      status: "In Progress",
+    },
+    {
+      title: "Smart Task Planner",
+      description:
+        "A task management application designed to organize academic assignments, track priorities, and keep upcoming deadlines visible. The goal is to make it easier to manage multiple tasks and monitor progress.",
+      role: "Backend Developer",
+      contribution:
+        "Worked on the proposed data structure for tasks, task statuses, and the information required to manage task records.",
+      technologies: ["Java", "MySQL"],
+      status: "Completed",
+    },
+  ],
+
+  experience: [
+    {
+      title: "Academic and Personal Development",
+      organization: "Independent Learning",
+      period: "Ongoing",
+      description:
+        "Developing programming fundamentals, practicing data structures and algorithms, and learning to build maintainable applications. Current learning areas include Java, React, database concepts, and version control.",
+    },
+  ],
+
+  achievements: [
+    "Add verified hackathon participation and the event name.",
+    "Add awards, competition results, or project recognition.",
+    "Describe a technical challenge you solved and its impact.",
+  ],
+
+  certifications: [
+    {
+      name: "Java Programming",
+      issuer: "Example certification — replace with actual details",
+    },
+    {
+      name: "Web Development",
+      issuer: "Example certification — replace with actual details",
+    },
+  ],
+
+  collaboration: {
+    lookingFor:
+      "I enjoy working with teammates who share ideas, communicate openly, and contribute consistently toward building useful projects.",
+    preferredAreas: [
+      "Web Development",
+      "AI & ML",
+      "Backend Development",
+    ],
+  },
+
+  github: "https://github.com/your-username",
+  linkedin: "https://www.linkedin.com/in/your-username",
+  portfolio: "",
+};
+
+// Load the correct profile for the currently selected student.
+function getInitialStudentProfile() {
+  const studentId = Number(CURRENT_STUDENT_ID);
+  const sharedStudent = getStudentById(studentId);
+
+  if (!sharedStudent) {
+    console.error("Student profile not found:", studentId);
+    return ARUN_DEFAULT_PROFILE;
+  }
+
+  // Preserve Arun's original detailed profile.
+  // Saved edits, if present, take priority over the defaults.
+  if (studentId === 1) {
+    return {
+      ...ARUN_DEFAULT_PROFILE,
+      ...(JSON.parse(
+        localStorage.getItem("hackmateStudentProfiles") || "{}"
+      )[studentId] || {}),
+    };
+  }
+
+  // Other students use their shared sample profile and saved edits.
+  return prepareStudentProfile(sharedStudent);
+}
+
+function StudentProfile() {
+  const [student, setStudent] = useState(getInitialStudentProfile);
 
   // Profile editor state
   const [editDraft, setEditDraft] = useState(null);
@@ -246,8 +332,8 @@ function StudentProfile() {
 
     if (!editDraft) return;
 
-    setStudent((previous) => ({
-      ...previous,
+    const updatedStudent = {
+      ...student,
       ...editDraft,
 
       skills: editDraft.skills
@@ -259,7 +345,11 @@ function StudentProfile() {
         .split(",")
         .map((interest) => interest.trim())
         .filter(Boolean),
-    }));
+    };
+
+    setStudent(updatedStudent);
+
+    saveStudentProfile(CURRENT_STUDENT_ID, updatedStudent);
 
     setEditDraft(null);
   };
@@ -326,20 +416,21 @@ function StudentProfile() {
         .filter(Boolean),
     };
 
-    setStudent((previous) => {
-      const updatedProjects = [...previous.projects];
+    const updatedProjects = [...student.projects];
 
-      if (editingProjectIndex === null) {
-        updatedProjects.push(updatedProject);
-      } else {
-        updatedProjects[editingProjectIndex] = updatedProject;
-      }
+    if (editingProjectIndex === null) {
+      updatedProjects.push(updatedProject);
+    } else {
+      updatedProjects[editingProjectIndex] = updatedProject;
+    }
 
-      return {
-        ...previous,
-        projects: updatedProjects,
-      };
-    });
+    const updatedStudent = {
+      ...student,
+      projects: updatedProjects,
+    };
+
+    setStudent(updatedStudent);
+    saveStudentProfile(CURRENT_STUDENT_ID, updatedStudent);
 
     setProjectDraft(null);
     setEditingProjectIndex(null);
@@ -353,12 +444,15 @@ function StudentProfile() {
 
     if (!confirmed) return;
 
-    setStudent((previous) => ({
-      ...previous,
-      projects: previous.projects.filter(
+    const updatedStudent = {
+      ...student,
+      projects: student.projects.filter(
         (_, projectIndex) => projectIndex !== index
       ),
-    }));
+    };
+
+    setStudent(updatedStudent);
+    saveStudentProfile(CURRENT_STUDENT_ID, updatedStudent);
   };
 
   // Reusable profile avatar

@@ -1,6 +1,6 @@
 
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
-import { students } from "./FindTeammates";
+import { getStudentById } from "../data/students";
 import "./StudentProfile.css";
 
 // Read the teams currently saved by HackMate AI.
@@ -67,9 +67,7 @@ function StudentPublicProfile() {
     }
   };
 
-  const student = students.find(
-    (item) => item.id === Number(id)
-  );
+  const student = getStudentById(Number(id));
 
   if (!student) {
     return (

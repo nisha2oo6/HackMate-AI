@@ -1,118 +1,9 @@
 
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./FindTeammates.css";
-
-export const students = [
-  {
-    id: 1,
-    initials: "AK",
-    name: "Arun Kumar",
-    department: "CSE",
-    year: "3rd Year",
-    section: "A",
-    bio: "Backend developer interested in building scalable applications and solving real-world problems.",
-    skills: ["Java", "Spring Boot", "MySQL", "REST API"],
-    interests: ["Web Development", "Hackathons", "Problem Solving"],
-    availability: "Open to teams",
-    projects: [
-      { name: "Campus Connect", status: "Completed" },
-      { name: "Smart Attendance", status: "In Progress" },
-    ],
-    experience: ["Built REST APIs using Spring Boot", "Worked with relational databases"],
-    achievements: ["Participated in college-level coding events"],
-    certifications: ["Java Programming"],
-    collaborationPreferences: ["Hackathons", "Web Applications", "Backend Development"],
-  },
-  {
-    id: 2,
-    initials: "PS",
-    name: "Priya Sharma",
-    department: "IT",
-    year: "3rd Year",
-    section: "B",
-    bio: "UI/UX enthusiast who enjoys creating clean, accessible, and user-friendly interfaces.",
-    skills: ["UI/UX", "Figma", "HTML", "CSS", "Wireframing"],
-    interests: ["Design", "Frontend Development", "Creative Projects"],
-    availability: "Open to teams",
-    projects: [{ name: "HealthTrack UI", status: "Completed" }],
-    experience: ["Designed responsive website layouts", "Created prototypes using Figma"],
-    achievements: ["Completed multiple UI design projects"],
-    certifications: ["UI/UX Design Fundamentals"],
-    collaborationPreferences: ["UI/UX Design", "Frontend Projects", "Hackathons"],
-  },
-  {
-    id: 3,
-    initials: "RD",
-    name: "Rahul Dev",
-    department: "AI & DS",
-    year: "2nd Year",
-    section: "A",
-    bio: "Interested in data science, machine learning, and using data to solve practical problems.",
-    skills: ["Python", "Machine Learning", "SQL", "Data Analysis"],
-    interests: ["Artificial Intelligence", "Data Science", "Research"],
-    availability: "Open to teams",
-    projects: [{ name: "Student Performance Analyzer", status: "In Progress" }],
-    experience: ["Worked with Python data analysis libraries"],
-    achievements: ["Completed beginner machine learning projects"],
-    certifications: ["Python for Data Science"],
-    collaborationPreferences: ["AI/ML Projects", "Research", "Data Analysis"],
-  },
-  {
-    id: 4,
-    initials: "MK",
-    name: "Meena Krish",
-    department: "CSE",
-    year: "2nd Year",
-    section: "B",
-    bio: "Frontend developer who enjoys turning ideas into interactive web applications.",
-    skills: ["React", "JavaScript", "CSS", "Git"],
-    interests: ["Web Development", "Product Building", "Hackathons"],
-    availability: "Open to teams",
-    projects: [
-      { name: "Task Planner", status: "Completed" },
-      { name: "Event Finder", status: "Planned" },
-    ],
-    experience: ["Built responsive React interfaces"],
-    achievements: ["Created independent frontend projects"],
-    certifications: ["Frontend Development"],
-    collaborationPreferences: ["React Projects", "Frontend Development", "Hackathons"],
-  },
-  {
-    id: 5,
-    initials: "KR",
-    name: "Karthik Raj",
-    department: "ECE",
-    year: "3rd Year",
-    section: "A",
-    bio: "Interested in hardware, IoT, and connecting software with real-world devices.",
-    skills: ["C", "Python", "IoT", "Arduino"],
-    interests: ["Embedded Systems", "Robotics", "Innovation"],
-    availability: "Open to teams",
-    projects: [{ name: "Smart Plant Monitor", status: "Completed" }],
-    experience: ["Worked with Arduino and basic sensors"],
-    achievements: ["Developed an IoT prototype"],
-    certifications: ["Introduction to IoT"],
-    collaborationPreferences: ["IoT Projects", "Hardware Prototyping", "Innovation Challenges"],
-  },
-  {
-    id: 6,
-    initials: "DS",
-    name: "Divya S",
-    department: "IT",
-    year: "2nd Year",
-    section: "A",
-    bio: "Interested in software testing, database management, and building reliable applications.",
-    skills: ["Java", "SQL", "Testing", "HTML"],
-    interests: ["Software Development", "Testing", "Database Systems"],
-    availability: "Not looking currently",
-    projects: [{ name: "Library Manager", status: "In Progress" }],
-    experience: ["Practised manual testing and SQL queries"],
-    achievements: ["Completed academic software projects"],
-    certifications: ["Software Testing Basics"],
-    collaborationPreferences: ["Testing", "Java Projects", "Database Applications"],
-  },
-];
+import { getAllStudents } from "../data/students";
+import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 
 const initialIncomingRequests = [
   {
@@ -124,6 +15,7 @@ const initialIncomingRequests = [
 ];
 
 function FindTeammates() {
+  const location = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
   const [selectedSkill, setSelectedSkill] = useState("All Skills");
@@ -163,8 +55,13 @@ function FindTeammates() {
     "CSS",
   ];
 
+  // Get the latest student data and exclude the logged-in student.
   const filteredStudents = useMemo(() => {
-    return students.filter((student) => {
+    return getAllStudents().filter((student) => {
+      if (student.id === Number(CURRENT_STUDENT_ID)) {
+        return false;
+      }
+
       const search = searchTerm.toLowerCase();
 
       const matchesSearch =
@@ -197,10 +94,17 @@ function FindTeammates() {
         matchesAvailability
       );
     });
-  }, [searchTerm, selectedDepartment, selectedSkill, selectedAvailability]);
+  }, [
+  searchTerm,
+  selectedDepartment,
+  selectedSkill,
+  selectedAvailability,
+  location.key,
+]);
 
+  // Retrieve the latest saved profile of a student.
   const getStudentById = (id) =>
-    students.find((student) => student.id === id);
+    getAllStudents().find((student) => student.id === Number(id));
 
   const getSentRequest = (studentId) =>
     sentRequests.find(
@@ -494,11 +398,11 @@ function FindTeammates() {
                 <div className="fm-card-section">
                   <span className="fm-label">SKILLS</span>
                   <div className="fm-tags">
-                    {student.skills.slice(0, 4).map((skill) => (
-                      <span className="fm-tag" key={skill}>
-                        {skill}
-                      </span>
-                    ))}
+                    {student.skills.map((skill) => (
+  <span className="fm-tag" key={skill}>
+    {skill}
+  </span>
+))}
                   </div>
                 </div>
 

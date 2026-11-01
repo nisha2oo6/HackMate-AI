@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { students } from "./FindTeammates";
+import { getAllStudents } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 import "./TeamDetails.css";
 
@@ -32,18 +32,23 @@ function TeamDetails() {
     setTeam(selectedTeam || null);
   }, [id]);
 
+  const allStudents = getAllStudents();
+
   const members = team?.members || [];
   const invitations = team?.invitations || [];
 
   // Identify the current student as the team leader.
   const isLeader = members.some(
     (member) =>
-      member.studentId === CURRENT_STUDENT_ID &&
-      member.role === "Leader"
+      Number(member.studentId) === Number(CURRENT_STUDENT_ID) &&
+      member.role === "Leader" &&
+      member.status === "Accepted"
   );
 
   const isMember = members.some(
-    (member) => member.studentId === CURRENT_STUDENT_ID
+    (member) =>
+      Number(member.studentId) === Number(CURRENT_STUDENT_ID) &&
+      member.status === "Accepted"
   );
 
   // Only accepted members count toward team capacity.
@@ -60,7 +65,7 @@ function TeamDetails() {
   );
 
   // Search students by name, department or skill.
-  const filteredStudents = students.filter((student) => {
+  const filteredStudents = allStudents.filter((student) => {
     const search = studentSearch.trim().toLowerCase();
 
     if (!search) return true;
@@ -74,6 +79,30 @@ function TeamDetails() {
     );
   });
 
+  // Exclude the leader, accepted members and students
+  // who already have pending invitations.
+  const eligibleStudents = filteredStudents.filter((student) => {
+    const isCurrentStudent =
+      Number(student.id) === Number(CURRENT_STUDENT_ID);
+
+    const isAlreadyMember = members.some(
+      (member) =>
+        Number(member.studentId) === Number(student.id)
+    );
+
+    const isAlreadyInvited = invitations.some(
+      (invitation) =>
+        Number(invitation.studentId) === Number(student.id) &&
+        invitation.status === "Pending"
+    );
+
+    return (
+      !isCurrentStudent &&
+      !isAlreadyMember &&
+      !isAlreadyInvited
+    );
+  });
+
   // Invite a student to the team.
   const handleInvite = (student) => {
     if (!isLeader) return;
@@ -84,12 +113,13 @@ function TeamDetails() {
     }
 
     const alreadyMember = members.some(
-      (member) => member.studentId === student.id
+      (member) =>
+        Number(member.studentId) === Number(student.id)
     );
 
     const alreadyInvited = invitations.some(
       (invitation) =>
-        invitation.studentId === student.id &&
+        Number(invitation.studentId) === Number(student.id) &&
         invitation.status === "Pending"
     );
 
@@ -149,8 +179,9 @@ function TeamDetails() {
   return (
     <div className="td-page">
       <Link to={backPath} className="td-back-link">
-  {backText}
-</Link>
+        {backText}
+      </Link>
+
       <div className="td-header">
         <div>
           <span className="td-eyebrow">TEAM MANAGEMENT</span>
@@ -284,69 +315,33 @@ function TeamDetails() {
                 />
 
                 <div className="td-invite-list">
-                  {filteredStudents.filter((student) => {
-                    const isAlreadyMember = members.some(
-                      (member) => member.studentId === student.id
-                    );
+                  {eligibleStudents.length > 0 ? (
+                    eligibleStudents.map((student) => (
+                      <div
+                        className="td-invite-student"
+                        key={student.id}
+                      >
+                        <div>
+                          <strong>{student.name}</strong>
+                          <span>{student.department}</span>
 
-                    const isAlreadyInvited = invitations.some(
-                      (invitation) =>
-                        invitation.studentId === student.id &&
-                        invitation.status === "Pending"
-                    );
-
-                    return (
-                      student.id !== CURRENT_STUDENT_ID &&
-                      !isAlreadyMember &&
-                      !isAlreadyInvited
-                    );
-                  }).length > 0 ? (
-                    filteredStudents.map((student) => {
-                      const isAlreadyMember = members.some(
-                        (member) => member.studentId === student.id
-                      );
-
-                      const isAlreadyInvited = invitations.some(
-                        (invitation) =>
-                          invitation.studentId === student.id &&
-                          invitation.status === "Pending"
-                      );
-
-                      if (
-                        student.id === CURRENT_STUDENT_ID ||
-                        isAlreadyMember ||
-                        isAlreadyInvited
-                      ) {
-                        return null;
-                      }
-
-                      return (
-                        <div
-                          className="td-invite-student"
-                          key={student.id}
-                        >
-                          <div>
-                            <strong>{student.name}</strong>
-                            <span>{student.department}</span>
-
-                            <Link
-                              to={`/student/${student.id}`}
-                              state={{ from: `/teams/${team.id}` }}
-                              className="td-view-profile-link"
-                            >
-                              View Profile →
-                            </Link>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => handleInvite(student)}
+                          <Link
+                            to={`/student/${student.id}`}
+                            state={{ from: `/teams/${team.id}` }}
+                            className="td-view-profile-link"
                           >
-                            Invite
-                          </button>
+                            View Profile →
+                          </Link>
                         </div>
-                      );
-                    })
+
+                        <button
+                          type="button"
+                          onClick={() => handleInvite(student)}
+                        >
+                          Invite
+                        </button>
+                      </div>
+                    ))
                   ) : (
                     <p>No eligible students found.</p>
                   )}

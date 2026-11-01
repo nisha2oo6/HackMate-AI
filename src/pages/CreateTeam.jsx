@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { students } from "./FindTeammates";
+import { getAllStudents } from "../data/students";
 import "./CreateTeam.css";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 
@@ -68,6 +68,9 @@ const getExistingTeamEventKey = (team) => {
 };
 
 function CreateTeam() {
+  // Always retrieve the latest saved student profiles.
+  const allStudents = getAllStudents();
+
   const [teamType, setTeamType] = useState("event");
   const [teamName, setTeamName] = useState("");
   const [eventName, setEventName] = useState("");
@@ -101,8 +104,13 @@ function CreateTeam() {
   const cleanedEventName = cleanEventName(eventName);
   const cleanedEventYear = eventYear.trim();
 
-  // Search students by name, department, skills or interests.
-  const filteredStudents = students.filter((student) => {
+  // Search students and exclude the currently logged-in student.
+  const filteredStudents = allStudents.filter((student) => {
+    // A student must never appear in their own teammate search.
+    if (Number(student.id) === Number(CURRENT_STUDENT_ID)) {
+      return false;
+    }
+
     const search = studentSearch.trim().toLowerCase();
 
     if (!search) return true;
@@ -121,6 +129,11 @@ function CreateTeam() {
 
   // Select or deselect teammates.
   const toggleMember = (studentId) => {
+    // Prevent the logged-in student from selecting themselves.
+    if (Number(studentId) === Number(CURRENT_STUDENT_ID)) {
+      return;
+    }
+
     setSelectedMembers((previous) => {
       if (previous.includes(studentId)) {
         setError("");
@@ -207,8 +220,14 @@ function CreateTeam() {
 
     const inviteCode = Math.random().toString(36).substring(2, 10);
 
-    const invitations = students
-      .filter((student) => selectedMembers.includes(student.id))
+    // Create invitations using the latest student data.
+    // Exclude the logged-in student as an additional safeguard.
+    const invitations = allStudents
+      .filter(
+        (student) =>
+          selectedMembers.includes(student.id) &&
+          Number(student.id) !== Number(CURRENT_STUDENT_ID)
+      )
       .map((student) => ({
         studentId: student.id,
         name: student.name,
@@ -216,8 +235,10 @@ function CreateTeam() {
         status: "Pending",
       }));
 
-    const leader = students.find(
-      (student) => student.id === CURRENT_STUDENT_ID
+    // Retrieve the latest leader information.
+    const leader = allStudents.find(
+      (student) =>
+        Number(student.id) === Number(CURRENT_STUDENT_ID)
     );
 
     const team = {
@@ -797,9 +818,14 @@ function CreateTeam() {
             </div>
 
             <div className="ct-preview-item">
-              <span>Team Leader</span>
-              <strong>You</strong>
-            </div>
+  <span>Team Leader</span>
+  <strong>
+    {allStudents.find(
+      (student) =>
+        Number(student.id) === Number(CURRENT_STUDENT_ID)
+    )?.name || "You"}
+  </strong>
+</div>
 
             <div className="ct-preview-item">
               <span>Maximum Capacity</span>
@@ -846,8 +872,12 @@ function CreateTeam() {
 
             {selectedMembers.length > 0 ? (
               <div className="ct-selected-list">
-                {students
-                  .filter((student) => selectedMembers.includes(student.id))
+                {allStudents
+                  .filter(
+                    (student) =>
+                      selectedMembers.includes(student.id) &&
+                      Number(student.id) !== Number(CURRENT_STUDENT_ID)
+                  )
                   .map((student) => (
                     <div className="ct-selected-member" key={student.id}>
                       <span className="ct-avatar">
