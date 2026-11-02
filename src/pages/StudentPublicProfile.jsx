@@ -3,7 +3,7 @@ import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { getStudentById } from "../data/students";
 import "./StudentProfile.css";
 
-// Read the teams currently saved by HackMate AI.
+// Read accepted team memberships from Local Storage.
 function getStudentTeamParticipation(studentId) {
   try {
     const savedTeams = JSON.parse(
@@ -32,6 +32,7 @@ function getStudentTeamParticipation(studentId) {
         );
 
         const teamType = String(team.type || "").toLowerCase();
+
         const isEventTeam =
           teamType === "event" ||
           teamType === "hackathon" ||
@@ -54,6 +55,67 @@ function getStudentTeamParticipation(studentId) {
   }
 }
 
+// Safely extract readable text from achievement or experience entries.
+function getDetailText(item) {
+  if (typeof item === "string") return item;
+
+  return (
+    item?.description ||
+    item?.title ||
+    item?.name ||
+    ""
+  );
+}
+
+// Normalize experience entries to the format used by the profile UI.
+function prepareExperience(experience) {
+  if (!Array.isArray(experience)) return [];
+
+  return experience.map((item) =>
+    typeof item === "string"
+      ? {
+          title: item,
+          organization: "Independent Learning",
+          period: "Ongoing",
+          description: item,
+        }
+      : {
+          title: item.title || item.name || "",
+          organization: item.organization || "",
+          period: item.period || "",
+          description: item.description || "",
+        }
+  );
+}
+
+// Normalize project entries from shared student data.
+function prepareProjects(projects) {
+  if (!Array.isArray(projects)) return [];
+
+  return projects.map((project) => ({
+    ...project,
+    title: project.title || project.name || "",
+    status: project.status || "Planned",
+    technologies: Array.isArray(project.technologies)
+      ? project.technologies
+      : [],
+  }));
+}
+
+// Normalize certification entries.
+function prepareCertifications(certifications) {
+  if (!Array.isArray(certifications)) return [];
+
+  return certifications.map((item) =>
+    typeof item === "string"
+      ? { name: item, issuer: "" }
+      : {
+          name: item.name || item.title || "",
+          issuer: item.issuer || "",
+        }
+  );
+}
+
 function StudentPublicProfile() {
   const { id } = useParams();
   const location = useLocation();
@@ -67,6 +129,7 @@ function StudentPublicProfile() {
     }
   };
 
+  // getStudentById includes saved profile changes.
   const student = getStudentById(Number(id));
 
   if (!student) {
@@ -75,32 +138,51 @@ function StudentPublicProfile() {
         <div className="student-profile-container">
           <h2>Student Profile Not Found</h2>
           <p>This student profile is unavailable.</p>
-          <Link to="/find-teammates">Back to Find Teammates</Link>
+          <Link to="/find-teammates">
+            Back to Find Teammates
+          </Link>
         </div>
       </main>
     );
   }
 
-  const skills = student.skills || [];
-  const interests = student.interests || [];
-  const projects = student.projects || [];
-  const experience = student.experience || [];
-  const achievements = student.achievements || [];
-  const certifications = student.certifications || [];
+  // Prepare shared student information.
+  const skills = Array.isArray(student.skills) ? student.skills : [];
+  const interests = Array.isArray(student.interests)
+    ? student.interests
+    : [];
 
-  const preferences = student.collaborationPreferences || [];
+  const projects = prepareProjects(student.projects);
+  const experience = prepareExperience(student.experience);
+
+  const achievements = Array.isArray(student.achievements)
+    ? student.achievements
+    : [];
+
+  const certifications = prepareCertifications(student.certifications);
+
+  // Use the same collaboration structure as StudentProfile.jsx.
+  const collaboration = student.collaboration || {};
 
   const collaborationDescription =
-    student.collaboration?.lookingFor ||
+    collaboration.lookingFor ||
     student.collaborationDescription ||
     "";
 
-  const preferredAreas =
-    student.collaboration?.preferredAreas ||
-    preferences;
+  const preferredAreas = Array.isArray(collaboration.preferredAreas)
+    ? collaboration.preferredAreas
+    : Array.isArray(student.collaborationPreferences)
+      ? student.collaborationPreferences
+      : [];
 
   // Only accepted team memberships are displayed.
   const teamParticipation = getStudentTeamParticipation(student.id);
+
+  const section = student.section
+    ? String(student.section).startsWith("Section ")
+      ? student.section
+      : `Section ${student.section}`
+    : "";
 
   const renderAvatar = () => (
     <div className="profile-avatar">
@@ -115,17 +197,6 @@ function StudentPublicProfile() {
       )}
     </div>
   );
-
-  const getDetailText = (item) => {
-    if (typeof item === "string") return item;
-
-    return (
-      item?.description ||
-      item?.title ||
-      item?.name ||
-      ""
-    );
-  };
 
   return (
     <main className="student-profile-page">
@@ -159,10 +230,14 @@ function StudentPublicProfile() {
               </p>
 
               <div className="profile-extra-details">
-                {student.section && (
-                  <span>{student.section}</span>
-                )}
-              </div>
+  {section && <span>{section}</span>}
+
+  <span className="profile-availability-status">
+    {student.availability === "Not looking currently"
+      ? "Not Looking Currently"
+      : "Open to Team"}
+  </span>
+</div>
             </div>
           </div>
         </header>
@@ -183,7 +258,7 @@ function StudentPublicProfile() {
                 Department
               </span>
               <span className="profile-detail-value">
-                {student.department}
+                {student.department || "Not specified"}
               </span>
             </div>
 
@@ -192,7 +267,7 @@ function StudentPublicProfile() {
                 Academic Year
               </span>
               <span className="profile-detail-value">
-                {student.year}
+                {student.year || "Not specified"}
               </span>
             </div>
 
@@ -201,15 +276,14 @@ function StudentPublicProfile() {
                 Section
               </span>
               <span className="profile-detail-value">
-                {student.section || "Not specified"}
+                {section || "Not specified"}
               </span>
             </div>
           </div>
         </section>
 
-        {/* 03. Technical Skills and 04. Areas of Interest */}
+        {/* 03. Technical Skills and Areas of Interest */}
         <section className="profile-capabilities">
-
           <div className="profile-capability-group">
             <span className="profile-label">
               TECHNICAL SKILLS
@@ -251,10 +325,9 @@ function StudentPublicProfile() {
               )}
             </div>
           </div>
-
         </section>
 
-        {/* 05. Projects */}
+        {/* 04. Projects */}
         <section className="profile-projects">
           <div className="profile-heading">
             <div>
@@ -281,9 +354,8 @@ function StudentPublicProfile() {
                   </div>
 
                   <div className="profile-project-content">
-
                     <div className="profile-project-heading">
-                      <h3>{project.title}</h3>
+                      <h3>{project.title || "Untitled Project"}</h3>
 
                       {project.status && (
                         <span
@@ -298,7 +370,7 @@ function StudentPublicProfile() {
                     </div>
 
                     <p className="profile-project-description">
-                      {project.description}
+                      {project.description || "No project description added yet."}
                     </p>
 
                     {project.role && (
@@ -314,7 +386,7 @@ function StudentPublicProfile() {
                       </p>
                     )}
 
-                    {project.technologies?.length > 0 && (
+                    {project.technologies.length > 0 && (
                       <div className="profile-tags">
                         {project.technologies.map(
                           (technology, techIndex) => (
@@ -328,7 +400,6 @@ function StudentPublicProfile() {
                         )}
                       </div>
                     )}
-
                   </div>
                 </article>
               ))
@@ -338,7 +409,7 @@ function StudentPublicProfile() {
           </div>
         </section>
 
-        {/* 06. Experience */}
+        {/* 05. Experience */}
         <section className="profile-experience">
           <div className="profile-heading">
             <div>
@@ -354,16 +425,15 @@ function StudentPublicProfile() {
               experience.map((item, index) => (
                 <article
                   className="profile-experience-item"
-                  key={index}
+                  key={`${item.title}-${index}`}
                 >
-                  <h3>
-                    {item.title || getDetailText(item)}
-                  </h3>
+                  <h3>{item.title || "Experience"}</h3>
 
-                  {item.organization && (
+                  {(item.organization || item.period) && (
                     <p className="profile-experience-meta">
                       {item.organization}
-                      {item.period ? ` · ${item.period}` : ""}
+                      {item.organization && item.period ? " · " : ""}
+                      {item.period}
                     </p>
                   )}
 
@@ -380,16 +450,15 @@ function StudentPublicProfile() {
           </div>
         </section>
 
-        {/* 07. Achievements and Certifications */}
+        {/* 06. Achievements and Certifications */}
         <section className="profile-additional">
-
           <div className="profile-additional-group">
             <h2>Achievements and Recognition</h2>
 
             {achievements.length ? (
               <ul className="profile-achievement-list">
                 {achievements.map((item, index) => (
-                  <li key={index}>
+                  <li key={`achievement-${index}`}>
                     {getDetailText(item)}
                   </li>
                 ))}
@@ -406,10 +475,10 @@ function StudentPublicProfile() {
               certifications.map((item, index) => (
                 <div
                   className="profile-certification-item"
-                  key={index}
+                  key={`certification-${index}`}
                 >
                   <span className="profile-certification-name">
-                    {item.name || getDetailText(item)}
+                    {item.name}
                   </span>
 
                   {item.issuer && (
@@ -423,10 +492,9 @@ function StudentPublicProfile() {
               <p>No certifications added yet.</p>
             )}
           </div>
-
         </section>
 
-        {/* 08. Team Compatibility */}
+        {/* 07. Collaboration Preferences */}
         <section className="profile-collaboration">
           <span className="profile-eyebrow">
             TEAM COMPATIBILITY
@@ -451,7 +519,7 @@ function StudentPublicProfile() {
                 preferredAreas.map((area, index) => (
                   <span
                     className="profile-tag"
-                    key={index}
+                    key={`area-${index}`}
                   >
                     {typeof area === "string" ? area : getDetailText(area)}
                   </span>
@@ -463,7 +531,7 @@ function StudentPublicProfile() {
           </div>
         </section>
 
-        {/* 09. Current Team Participation */}
+        {/* 08. Current Team Participation */}
         <section className="profile-team-participation">
           <div className="profile-heading">
             <div>
@@ -534,7 +602,7 @@ function StudentPublicProfile() {
           )}
         </section>
 
-        {/* 10. Social Links */}
+        {/* 09. Social Links */}
         <footer className="profile-footer">
           <div className="profile-footer-copy">
             <span className="profile-eyebrow">

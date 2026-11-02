@@ -309,7 +309,24 @@
 }
 
 .dashboard-stat-card {
+  display: block;
+  min-width: 0;
   padding: 19px;
+  transition: border-color 0.2s ease, transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #5267a0;
+  background: #17223a;
+}
+
+.dashboard-stat-card:focus-visible,
+.dashboard-inline-link:focus-visible,
+.dashboard-secondary-button:focus-visible {
+  outline: 2px solid var(--dash-blue);
+  outline-offset: 3px;
 }
 
 .dashboard-stat-top {
@@ -415,12 +432,14 @@
 }
 
 .dashboard-panel {
+  min-width: 0;
   padding: 20px;
 }
 
 .dashboard-status-dot {
   width: 9px;
   height: 9px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: #f0b968;
   box-shadow: 0 0 0 4px rgba(240, 185, 104, 0.1);
@@ -487,6 +506,77 @@
 
 .dashboard-secondary-button:hover {
   background: #2a3b60;
+}
+
+/* Dynamic team and invitation content */
+
+.dashboard-dynamic-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  padding-top: 23px;
+}
+
+.dashboard-dynamic-content > h3 {
+  margin: 0;
+  color: #e2e9ff;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.dashboard-dynamic-list {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+}
+
+.dashboard-dynamic-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #293752;
+  border-radius: 9px;
+  background: #172238;
+}
+
+.dashboard-dynamic-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-dynamic-info strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #e0e7ff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-dynamic-info p {
+  margin: 5px 0 0;
+  color: var(--dash-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.dashboard-inline-link {
+  flex-shrink: 0;
+  color: #a9b9ff !important;
+  font-size: 10px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.dashboard-inline-link:hover {
+  color: #d0d9ff !important;
+}
+
+.dashboard-dynamic-content > .dashboard-secondary-button {
+  margin-top: 0;
 }
 
 .dashboard-footer {
@@ -607,5 +697,10 @@
 
   .dashboard-topbar h2 {
     font-size: 14px;
+  }
+
+  .dashboard-dynamic-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

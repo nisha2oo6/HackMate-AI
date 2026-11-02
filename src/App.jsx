@@ -20,6 +20,9 @@ import StudentPublicProfile from "./pages/StudentPublicProfile";
 import MyTeams from "./pages/MyTeams";
 import TeamDetails from "./pages/TeamDetails";
 import Invitations from "./pages/Invitations";
+import MyProjects from "./pages/MyProjects";
+import Achievements from "./pages/Achievements";
+import Connections from "./pages/Connections";
 function ScrollToTop() {
   const { pathname } = useLocation();
 
@@ -52,13 +55,16 @@ function App() {
   path="/dashboard"
   element={<StudentDashboard />}
 />
+        <Route path="/my-projects" element={<MyProjects />} />
         <Route path="/teams" element={<MyTeams />} />
         <Route path="/profile" element={<StudentProfile />} />
+        <Route path="/achievements" element={<Achievements />} />
         <Route path="/student/:id" element={<StudentPublicProfile />} />
         <Route
   path="/find-teammates"
   element={<FindTeammates />}
 />
+    <Route path="/connections" element={<Connections />} />
     <Route path="/teams/:id" element={<TeamDetails />} />
     <Route path="/invitations" element={<Invitations />} />
         </Routes>

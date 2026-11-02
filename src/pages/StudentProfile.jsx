@@ -6,6 +6,7 @@ import {
   saveStudentProfile,
 } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
+import { Link } from "react-router-dom";
 
 // Get the student's accepted team participations from Local Storage.
 function getStudentTeamParticipation(studentId) {
@@ -17,13 +18,14 @@ function getStudentTeamParticipation(studentId) {
     if (!Array.isArray(savedTeams)) return [];
 
     return savedTeams
-      .filter((team) =>
-        Array.isArray(team.members) &&
-        team.members.some(
-          (member) =>
-            String(member.studentId) === String(studentId) &&
-            String(member.status || "").toLowerCase() === "accepted"
-        )
+      .filter(
+        (team) =>
+          Array.isArray(team.members) &&
+          team.members.some(
+            (member) =>
+              String(member.studentId) === String(studentId) &&
+              String(member.status || "").toLowerCase() === "accepted"
+          )
       )
       .map((team) => {
         const member = team.members.find(
@@ -64,16 +66,17 @@ function prepareStudentProfile(student) {
       : `Section ${student.section || ""}`,
 
     bio: student.bio || "",
+    availability: student.availability || "Open to teams",
+    skills: Array.isArray(student.skills) ? student.skills : [],
+    interests: Array.isArray(student.interests)
+      ? student.interests
+      : [],
 
-    skills: student.skills || [],
-    interests: student.interests || [],
-
+    // Projects are displayed here only.
+    // Full project management happens in My Projects.
     projects: (student.projects || []).map((project) => ({
+      ...project,
       title: project.title || project.name || "",
-      description: project.description || "",
-      role: project.role || "",
-      contribution: project.contribution || "",
-      technologies: project.technologies || [],
       status: project.status || "Planned",
     })),
 
@@ -85,10 +88,17 @@ function prepareStudentProfile(student) {
             period: "Ongoing",
             description: item,
           }
-        : item
+        : {
+            title: item.title || "",
+            organization: item.organization || "",
+            period: item.period || "",
+            description: item.description || "",
+          }
     ),
 
-    achievements: student.achievements || [],
+    achievements: Array.isArray(student.achievements)
+      ? student.achievements
+      : [],
 
     certifications: (student.certifications || []).map((item) =>
       typeof item === "string"
@@ -108,8 +118,8 @@ function prepareStudentProfile(student) {
   };
 }
 
-// Arun's original detailed profile.
-// This is preserved rather than replacing it with the shorter sample record.
+// Arun's original detailed sample profile.
+// Shared student data takes priority over these defaults.
 const ARUN_DEFAULT_PROFILE = {
   profileImage: "",
   name: "Arun Kumar",
@@ -136,7 +146,7 @@ const ARUN_DEFAULT_PROFILE = {
     {
       title: "Campus Connect",
       description:
-        "A student-focused platform designed to help students discover opportunities, connect with peers, and collaborate on projects. The concept brings student information and collaboration activities into one accessible place.",
+        "A student-focused platform designed to help students discover opportunities, connect with peers, and collaborate on projects.",
       role: "Full-Stack Developer",
       contribution:
         "Working on the user interface, page navigation, reusable React components, and planned frontend-backend integration.",
@@ -146,7 +156,7 @@ const ARUN_DEFAULT_PROFILE = {
     {
       title: "Smart Task Planner",
       description:
-        "A task management application designed to organize academic assignments, track priorities, and keep upcoming deadlines visible. The goal is to make it easier to manage multiple tasks and monitor progress.",
+        "A task management application designed to organize academic assignments, track priorities, and monitor progress.",
       role: "Backend Developer",
       contribution:
         "Worked on the proposed data structure for tasks, task statuses, and the information required to manage task records.",
@@ -165,22 +175,9 @@ const ARUN_DEFAULT_PROFILE = {
     },
   ],
 
-  achievements: [
-    "Add verified hackathon participation and the event name.",
-    "Add awards, competition results, or project recognition.",
-    "Describe a technical challenge you solved and its impact.",
-  ],
+  achievements: [],
 
-  certifications: [
-    {
-      name: "Java Programming",
-      issuer: "Example certification — replace with actual details",
-    },
-    {
-      name: "Web Development",
-      issuer: "Example certification — replace with actual details",
-    },
-  ],
+  certifications: [],
 
   collaboration: {
     lookingFor:
@@ -192,12 +189,13 @@ const ARUN_DEFAULT_PROFILE = {
     ],
   },
 
-  github: "https://github.com/your-username",
-  linkedin: "https://www.linkedin.com/in/your-username",
+  github: "",
+  linkedin: "",
   portfolio: "",
 };
 
-// Load the correct profile for the currently selected student.
+// Load the currently selected student's profile.
+// getStudentById already merges saved profile information.
 function getInitialStudentProfile() {
   const studentId = Number(CURRENT_STUDENT_ID);
   const sharedStudent = getStudentById(studentId);
@@ -207,46 +205,56 @@ function getInitialStudentProfile() {
     return ARUN_DEFAULT_PROFILE;
   }
 
-  // Preserve Arun's original detailed profile.
-  // Saved edits, if present, take priority over the defaults.
+  const preparedProfile = prepareStudentProfile(sharedStudent);
+
   if (studentId === 1) {
     return {
       ...ARUN_DEFAULT_PROFILE,
-      ...(JSON.parse(
-        localStorage.getItem("hackmateStudentProfiles") || "{}"
-      )[studentId] || {}),
+      ...preparedProfile,
+
+      achievements: preparedProfile.achievements,
+      certifications: preparedProfile.certifications,
+
+      projects:
+        preparedProfile.projects.length > 0
+          ? preparedProfile.projects
+          : ARUN_DEFAULT_PROFILE.projects,
+
+      experience:
+        preparedProfile.experience.length > 0
+          ? preparedProfile.experience
+          : ARUN_DEFAULT_PROFILE.experience,
     };
   }
 
-  // Other students use their shared sample profile and saved edits.
-  return prepareStudentProfile(sharedStudent);
+  return preparedProfile;
 }
 
 function StudentProfile() {
   const [student, setStudent] = useState(getInitialStudentProfile);
 
-  // Profile editor state
+  // Main profile editor state.
   const [editDraft, setEditDraft] = useState(null);
 
-  // Project editor state
-  const [projectDraft, setProjectDraft] = useState(null);
-  const [editingProjectIndex, setEditingProjectIndex] = useState(null);
+  // Individual section editor state.
+  const [sectionDraft, setSectionDraft] = useState(null);
+  const [editingSection, setEditingSection] = useState("");
 
-  // Get current team participation
+  // Get current team participation.
   const teamParticipation = getStudentTeamParticipation(
     CURRENT_STUDENT_ID
   );
 
-  // Open the profile editor
+  // Open the profile editor.
   const openEditProfile = () => {
     setEditDraft({
       ...student,
-      skills: student.skills.join(", "),
-      interests: student.interests.join(", "),
+      skills: (student.skills || []).join(", "),
+      interests: (student.interests || []).join(", "),
     });
   };
 
-  // Update profile form fields
+  // Update profile form fields.
   const handleEditChange = (event) => {
     const { name, value } = event.target;
 
@@ -260,7 +268,7 @@ function StudentProfile() {
     });
   };
 
-  // Upload and preview a profile photo
+  // Upload and preview a profile photo.
   const handleProfileImageChange = (event) => {
     const file = event.target.files?.[0];
 
@@ -292,14 +300,12 @@ function StudentProfile() {
         return;
       }
 
-      const imageData = reader.result;
-
       setEditDraft((previous) => {
         if (!previous) return previous;
 
         return {
           ...previous,
-          profileImage: imageData,
+          profileImage: reader.result,
         };
       });
     };
@@ -310,11 +316,11 @@ function StudentProfile() {
 
     reader.readAsDataURL(file);
 
-    // Allow selecting the same image again
+    // Allow selecting the same image again.
     event.target.value = "";
   };
 
-  // Remove profile photo
+  // Remove profile photo.
   const handleRemoveProfileImage = () => {
     setEditDraft((previous) => {
       if (!previous) return previous;
@@ -326,7 +332,7 @@ function StudentProfile() {
     });
   };
 
-  // Save profile changes
+  // Save profile changes without replacing project data.
   const saveProfile = (event) => {
     event.preventDefault();
 
@@ -345,6 +351,9 @@ function StudentProfile() {
         .split(",")
         .map((interest) => interest.trim())
         .filter(Boolean),
+
+      // Keep the existing projects unchanged.
+      projects: student.projects || [],
     };
 
     setStudent(updatedStudent);
@@ -354,108 +363,123 @@ function StudentProfile() {
     setEditDraft(null);
   };
 
-  // Open a blank form to add a project
-  const openAddProject = () => {
-    setEditingProjectIndex(null);
-
-    setProjectDraft({
-      title: "",
-      description: "",
-      role: "",
-      contribution: "",
-      technologies: "",
-      status: "Planned",
-    });
-  };
-
-  // Open an existing project for editing
-  const openEditProject = (project, index) => {
-    setEditingProjectIndex(index);
-
-    setProjectDraft({
-      ...project,
-      technologies: project.technologies.join(", "),
-    });
-  };
-
-  // Update project form fields
-  const handleProjectChange = (event) => {
-    const { name, value } = event.target;
-
-    setProjectDraft((previous) => {
-      if (!previous) return previous;
-
-      return {
-        ...previous,
-        [name]: value,
-      };
-    });
-  };
-
-  // Save a new or edited project
-  const saveProject = (event) => {
-    event.preventDefault();
-
-    if (!projectDraft) return;
-
-    if (!projectDraft.title.trim()) {
-      alert("Please enter a project title.");
-      return;
-    }
-
-    const updatedProject = {
-      ...projectDraft,
-      title: projectDraft.title.trim(),
-      description: projectDraft.description.trim(),
-      role: projectDraft.role.trim(),
-      contribution: projectDraft.contribution.trim(),
-
-      technologies: projectDraft.technologies
-        .split(",")
-        .map((technology) => technology.trim())
-        .filter(Boolean),
-    };
-
-    const updatedProjects = [...student.projects];
-
-    if (editingProjectIndex === null) {
-      updatedProjects.push(updatedProject);
-    } else {
-      updatedProjects[editingProjectIndex] = updatedProject;
-    }
-
-    const updatedStudent = {
-      ...student,
-      projects: updatedProjects,
-    };
-
-    setStudent(updatedStudent);
-    saveStudentProfile(CURRENT_STUDENT_ID, updatedStudent);
-
-    setProjectDraft(null);
-    setEditingProjectIndex(null);
-  };
-
-  // Delete a project after confirmation
-  const deleteProject = (index) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this project?"
+  // Open the Experience editor.
+  const openExperienceEditor = () => {
+    setSectionDraft(
+      (student.experience || []).map((item) => ({
+        title: item.title || "",
+        organization: item.organization || "",
+        period: item.period || "",
+        description: item.description || "",
+      }))
     );
 
-    if (!confirmed) return;
+    setEditingSection("experience");
+  };
+
+  // Open the collaboration preferences editor.
+  const openCollaborationEditor = () => {
+    setSectionDraft({
+      lookingFor: collaboration.lookingFor || "",
+      preferredAreas: (
+        collaboration.preferredAreas || []
+      ).join(", "),
+    });
+
+    setEditingSection("collaboration");
+  };
+
+  // Update an experience entry.
+  const handleExperienceChange = (index, field, value) => {
+    setSectionDraft((previous) =>
+      previous.map((item, itemIndex) =>
+        itemIndex === index
+          ? { ...item, [field]: value }
+          : item
+      )
+    );
+  };
+
+  // Add another experience entry.
+  const addExperience = () => {
+    setSectionDraft((previous) => [
+      ...previous,
+      {
+        title: "",
+        organization: "",
+        period: "",
+        description: "",
+      },
+    ]);
+  };
+
+  // Remove an experience entry.
+  const removeExperience = (index) => {
+    setSectionDraft((previous) =>
+      previous.filter((_, itemIndex) => itemIndex !== index)
+    );
+  };
+
+  // Close the individual section editor.
+  const closeSectionEditor = () => {
+    setSectionDraft(null);
+    setEditingSection("");
+  };
+
+  // Save Experience or Collaboration changes.
+  const saveSectionChanges = (event) => {
+    event.preventDefault();
+
+    if (!sectionDraft || !editingSection) return;
+
+    let updatedFields = {};
+
+    if (editingSection === "experience") {
+      const updatedExperience = sectionDraft
+        .map((item) => ({
+          title: item.title.trim(),
+          organization: item.organization.trim(),
+          period: item.period.trim(),
+          description: item.description.trim(),
+        }))
+        .filter(
+          (item) =>
+            item.title ||
+            item.organization ||
+            item.description
+        );
+
+      updatedFields = {
+        experience: updatedExperience,
+      };
+    }
+
+    if (editingSection === "collaboration") {
+      updatedFields = {
+        collaboration: {
+          lookingFor: sectionDraft.lookingFor.trim(),
+          preferredAreas: sectionDraft.preferredAreas
+            .split(",")
+            .map((area) => area.trim())
+            .filter(Boolean),
+        },
+      };
+    }
 
     const updatedStudent = {
       ...student,
-      projects: student.projects.filter(
-        (_, projectIndex) => projectIndex !== index
-      ),
+      ...updatedFields,
     };
 
     setStudent(updatedStudent);
-    saveStudentProfile(CURRENT_STUDENT_ID, updatedStudent);
+
+    // Save only the changed section.
+    saveStudentProfile(CURRENT_STUDENT_ID, updatedFields);
+
+    closeSectionEditor();
   };
 
-  // Reusable profile avatar
+  // Reusable profile avatar.
   const renderAvatar = (image, name, altText) => (
     <div className="profile-avatar">
       {image ? (
@@ -465,6 +489,16 @@ function StudentProfile() {
       )}
     </div>
   );
+
+  const projects = student.projects || [];
+  const experience = student.experience || [];
+  const achievements = student.achievements || [];
+  const certifications = student.certifications || [];
+
+  const collaboration = student.collaboration || {
+    lookingFor: "",
+    preferredAreas: [],
+  };
 
   return (
     <main className="student-profile-page">
@@ -494,6 +528,12 @@ function StudentProfile() {
 
               <div className="profile-extra-details">
                 <span>{student.section}</span>
+
+                <span className="profile-availability-status">
+                  {student.availability === "Not looking currently"
+                    ? "Not Looking Currently"
+                    : "Open to Team"}
+                </span>
               </div>
             </div>
           </div>
@@ -543,26 +583,28 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* 03. Technical skills */}
+        {/* 03. Technical skills and interests */}
         <section className="profile-capabilities">
           <div className="profile-capability-group">
             <span className="profile-label">TECHNICAL SKILLS</span>
 
             <div className="profile-tags">
-              {student.skills.map((skill, index) => (
-                <span className="profile-tag" key={`${skill}-${index}`}>
+              {(student.skills || []).map((skill, index) => (
+                <span
+                  className="profile-tag"
+                  key={`${skill}-${index}`}
+                >
                   {skill}
                 </span>
               ))}
             </div>
           </div>
 
-          {/* 04. Areas of interest */}
           <div className="profile-capability-group">
             <span className="profile-label">AREAS OF INTEREST</span>
 
             <div className="profile-tags">
-              {student.interests.map((interest, index) => (
+              {(student.interests || []).map((interest, index) => (
                 <span
                   className="profile-tag profile-interest-tag"
                   key={`${interest}-${index}`}
@@ -574,7 +616,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* 05. Projects */}
+        {/* 04. Project overview - managed in My Projects */}
         <section className="profile-projects">
           <div className="profile-heading">
             <div>
@@ -584,97 +626,62 @@ function StudentProfile() {
               <h2>Projects</h2>
             </div>
 
-            <div className="profile-project-heading-actions">
-              <span className="profile-project-count">
-                {String(student.projects.length).padStart(2, "0")} projects
-              </span>
-
-              <button
-                type="button"
-                className="profile-add-project-button"
-                onClick={openAddProject}
-              >
-                + Add Project
-              </button>
-            </div>
+            <span className="profile-project-count">
+              {String(projects.length).padStart(2, "0")} projects
+            </span>
           </div>
 
-          <div className="profile-project-list">
-            {student.projects.map((project, index) => (
+          <div className="profile-overview-project-list">
+            {projects.map((project, index) => (
               <article
-                className="profile-project"
-                key={`${project.title}-${index}`}
+                className="profile-overview-project"
+                key={`${project.title || project.name}-${index}`}
               >
-                <div className="profile-project-index">
-                  {String(index + 1).padStart(2, "0")}
-                </div>
-
-                <div className="profile-project-content">
-                  <div className="profile-project-heading">
-                    <h3>{project.title}</h3>
-
-                    <div className="profile-project-heading-actions">
-                      <span
-                        className={`profile-project-status ${project.status
-                          .toLowerCase()
-                          .replaceAll(" ", "-")}`}
-                      >
-                        <span className="project-status-dot" />
-                        {project.status}
-                      </span>
-
-                      <button
-                        type="button"
-                        className="profile-project-action"
-                        onClick={() => openEditProject(project, index)}
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        className="profile-project-action profile-project-delete"
-                        onClick={() => deleteProject(index)}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                <div className="profile-overview-project-top">
+                  <div className="profile-overview-project-number">
+                    {String(index + 1).padStart(2, "0")}
                   </div>
 
-                  <p className="profile-project-description">
-                    {project.description}
-                  </p>
+                  <span
+                    className={`profile-project-status ${(project.status || "Planned")
+                      .toLowerCase()
+                      .replaceAll(" ", "-")}`}
+                  >
+                    <span className="project-status-dot" />
+                    {project.status || "Planned"}
+                  </span>
+                </div>
 
-                  <p className="profile-project-role">
-                    <strong>Role:</strong> {project.role || "Not specified"}
-                  </p>
+                <h3>{project.title || project.name}</h3>
 
-                  <p className="profile-project-description">
-                    <strong>Contribution:</strong>{" "}
-                    {project.contribution || "Not specified"}
-                  </p>
+                <p className="profile-overview-description">
+                  {project.description || "No project description added yet."}
+                </p>
 
-                  <div className="profile-tags">
+                <div className="profile-overview-role">
+                  <span>YOUR ROLE</span>
+                  <strong>{project.role || "Not specified"}</strong>
+                </div>
+
+                {project.technologies?.length > 0 && (
+                  <div className="profile-overview-technologies">
                     {project.technologies.map((technology, techIndex) => (
-                      <span
-                        className="profile-technology"
-                        key={`${technology}-${techIndex}`}
-                      >
+                      <span key={`${technology}-${techIndex}`}>
                         {technology}
                       </span>
                     ))}
                   </div>
-                </div>
+                )}
               </article>
             ))}
 
-            {student.projects.length === 0 && (
+            {projects.length === 0 && (
               <div className="profile-project">
                 <div className="profile-project-content">
                   <h3>No projects added yet</h3>
                   <p>
-                    Add your first project to show other students
-                    what you're building.
+                    Your projects will appear here when you add them
+                    through My Projects.
                   </p>
                 </div>
               </div>
@@ -682,7 +689,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* 06. Experience */}
+        {/* 05. Experience */}
         <section className="profile-experience">
           <div className="profile-heading">
             <div>
@@ -691,10 +698,18 @@ function StudentProfile() {
               </span>
               <h2>Experience</h2>
             </div>
+
+            <button
+              type="button"
+              className="profile-section-edit-button"
+              onClick={openExperienceEditor}
+            >
+              Edit Experience ↗
+            </button>
           </div>
 
           <div className="profile-experience-list">
-            {student.experience.map((item, index) => (
+            {experience.map((item, index) => (
               <article
                 className="profile-experience-item"
                 key={`${item.title}-${index}`}
@@ -710,27 +725,51 @@ function StudentProfile() {
                 </p>
               </article>
             ))}
+
+            {experience.length === 0 && (
+              <div className="profile-team-empty">
+                No experience added yet. Use Edit Experience to add your
+                learning, internship, or work experience.
+              </div>
+            )}
           </div>
         </section>
 
-        {/* 07. Achievements and certifications */}
-        <section className="profile-additional">
+        {/* 06. Achievements and certifications */}
+        <section className="profile-additional" id="achievements">
           <div className="profile-additional-group">
             <h2>Achievements and Recognition</h2>
 
+            <Link
+              to="/achievements"
+              className="manage-achievements-button"
+            >
+              Manage Achievements
+            </Link>
+
             <ul className="profile-achievement-list">
-              {student.achievements.map((achievement, index) => (
-                <li key={`${achievement}-${index}`}>
-                  {achievement}
+              {achievements.map((achievement, index) => (
+                <li
+                  key={`${index}-${typeof achievement === "string"
+                    ? achievement
+                    : achievement.title || achievement.name || "achievement"}`}
+                >
+                  {typeof achievement === "string"
+                    ? achievement
+                    : achievement.title || achievement.name}
                 </li>
               ))}
             </ul>
+
+            {achievements.length === 0 && (
+              <p>No achievements added yet.</p>
+            )}
           </div>
 
           <div className="profile-additional-group">
             <h2>Certifications</h2>
 
-            {student.certifications.map((certification, index) => (
+            {certifications.map((certification, index) => (
               <div
                 className="profile-certification-item"
                 key={`${certification.name}-${index}`}
@@ -744,18 +783,36 @@ function StudentProfile() {
                 </span>
               </div>
             ))}
+
+            {certifications.length === 0 && (
+              <p>No certifications added yet.</p>
+            )}
           </div>
         </section>
 
-        {/* 08. Collaboration preferences */}
+        {/* 07. Collaboration preferences */}
         <section className="profile-collaboration">
-          <span className="profile-eyebrow">TEAM COMPATIBILITY</span>
+          <div className="profile-heading">
+            <div>
+              <span className="profile-eyebrow">
+                TEAM COMPATIBILITY
+              </span>
 
-          <h2 className="profile-section-heading">
-            What I'm Looking For
-          </h2>
+              <h2 className="profile-section-heading">
+                What I'm Looking For
+              </h2>
+            </div>
 
-          <p>{student.collaboration.lookingFor}</p>
+            <button
+              type="button"
+              className="profile-section-edit-button"
+              onClick={openCollaborationEditor}
+            >
+              Edit Preferences ↗
+            </button>
+          </div>
+
+          <p>{collaboration.lookingFor}</p>
 
           <div className="profile-capability-group">
             <span className="profile-label">
@@ -763,8 +820,11 @@ function StudentProfile() {
             </span>
 
             <div className="profile-tags">
-              {student.collaboration.preferredAreas.map((area, index) => (
-                <span className="profile-tag" key={`${area}-${index}`}>
+              {(collaboration.preferredAreas || []).map((area, index) => (
+                <span
+                  className="profile-tag"
+                  key={`${area}-${index}`}
+                >
                   {area}
                 </span>
               ))}
@@ -772,7 +832,7 @@ function StudentProfile() {
           </div>
         </section>
 
-        {/* 09. Current team participation */}
+        {/* 08. Current team participation */}
         <section className="profile-team-participation">
           <div className="profile-heading">
             <div>
@@ -1024,6 +1084,7 @@ function StudentProfile() {
                 <span>Separate each skill with a comma.</span>
               </label>
 
+              {/* Corrected: Areas of interest has its own label. */}
               <label>
                 Areas of interest
                 <textarea
@@ -1034,6 +1095,25 @@ function StudentProfile() {
                   placeholder="Web development, AI, hackathons"
                 />
                 <span>Separate each interest with a comma.</span>
+              </label>
+
+              {/* Collaboration availability is a separate field. */}
+              <label>
+                Collaboration Availability
+                <select
+                  name="availability"
+                  value={editDraft.availability || "Open to teams"}
+                  onChange={handleEditChange}
+                >
+                  <option value="Open to teams">Open to Team</option>
+                  <option value="Not looking currently">
+                    Not Looking Currently
+                  </option>
+                </select>
+
+                <span>
+                  Let other students know whether you're currently open to joining teams.
+                </span>
               </label>
 
               <label>
@@ -1079,7 +1159,10 @@ function StudentProfile() {
                 Cancel
               </button>
 
-              <button type="submit" className="profile-save-button">
+              <button
+                type="submit"
+                className="profile-save-button"
+              >
                 Save Changes
               </button>
             </div>
@@ -1087,134 +1170,192 @@ function StudentProfile() {
         </div>
       )}
 
-      {/* Add/Edit Project modal */}
-      {projectDraft && (
+      {/* Experience and Collaboration editor */}
+      {sectionDraft && (
         <div
           className="profile-edit-overlay"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) {
-              setProjectDraft(null);
-              setEditingProjectIndex(null);
+              closeSectionEditor();
             }
           }}
         >
           <form
             className="profile-edit-modal"
-            onSubmit={saveProject}
+            onSubmit={saveSectionChanges}
           >
             <div className="profile-edit-header">
               <div>
-                <p className="profile-edit-eyebrow">YOUR WORK</p>
+                <p className="profile-edit-eyebrow">
+                  UPDATE YOUR PROFILE
+                </p>
 
                 <h2>
-                  {editingProjectIndex === null
-                    ? "Add Project"
-                    : "Edit Project"}
+                  {editingSection === "experience"
+                    ? "Edit Experience"
+                    : "Edit Collaboration Preferences"}
                 </h2>
 
                 <p>
-                  Share what you've built and your contribution.
+                  {editingSection === "experience"
+                    ? "Add your learning, internship, work, or project experience."
+                    : "Tell other students what kind of teammates and projects you're looking for."}
                 </p>
               </div>
 
               <button
                 type="button"
                 className="profile-edit-close"
-                onClick={() => {
-                  setProjectDraft(null);
-                  setEditingProjectIndex(null);
-                }}
-                aria-label="Close project form"
+                onClick={closeSectionEditor}
+                aria-label="Close editor"
               >
                 ×
               </button>
             </div>
 
             <div className="profile-edit-fields">
-              <label>
-                Project title
-                <input
-                  name="title"
-                  value={projectDraft.title}
-                  onChange={handleProjectChange}
-                  placeholder="e.g. HackMate AI"
-                  required
-                />
-              </label>
+              {editingSection === "experience" && (
+                <>
+                  {sectionDraft.map((item, index) => (
+                    <div
+                      className="profile-experience-editor-item"
+                      key={index}
+                    >
+                      <div className="profile-experience-editor-heading">
+                        <strong>Experience {index + 1}</strong>
 
-              <label>
-                Project description
-                <textarea
-                  name="description"
-                  value={projectDraft.description}
-                  onChange={handleProjectChange}
-                  rows={4}
-                  placeholder="What problem does your project solve?"
-                  required
-                />
-              </label>
+                        <button
+                          type="button"
+                          className="profile-remove-photo"
+                          onClick={() => removeExperience(index)}
+                        >
+                          Remove
+                        </button>
+                      </div>
 
-              <label>
-                Your role
-                <input
-                  name="role"
-                  value={projectDraft.role}
-                  onChange={handleProjectChange}
-                  placeholder="e.g. Frontend Developer"
-                />
-              </label>
+                      <label>
+                        Title
+                        <input
+                          value={item.title}
+                          onChange={(event) =>
+                            handleExperienceChange(
+                              index,
+                              "title",
+                              event.target.value
+                            )
+                          }
+                          placeholder="e.g. Web Development Intern"
+                        />
+                      </label>
 
-              <label>
-                Your contribution
-                <textarea
-                  name="contribution"
-                  value={projectDraft.contribution}
-                  onChange={handleProjectChange}
-                  rows={3}
-                  placeholder="What did you build or contribute?"
-                />
-              </label>
+                      <label>
+                        Organization
+                        <input
+                          value={item.organization}
+                          onChange={(event) =>
+                            handleExperienceChange(
+                              index,
+                              "organization",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Company, college, or self-learning"
+                        />
+                      </label>
 
-              <label>
-                Technologies
-                <input
-                  name="technologies"
-                  value={projectDraft.technologies}
-                  onChange={handleProjectChange}
-                  placeholder="React, Java, MySQL"
-                />
-                <span>Separate technologies with commas.</span>
-              </label>
+                      <label>
+                        Duration
+                        <input
+                          value={item.period}
+                          onChange={(event) =>
+                            handleExperienceChange(
+                              index,
+                              "period",
+                              event.target.value
+                            )
+                          }
+                          placeholder="e.g. June 2026 – August 2026"
+                        />
+                      </label>
 
-              <label>
-                Project status
-                <select
-                  name="status"
-                  value={projectDraft.status}
-                  onChange={handleProjectChange}
-                >
-                  <option value="Planned">Planned</option>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Completed">Completed</option>
-                  <option value="On Hold">On Hold</option>
-                </select>
-              </label>
+                      <label>
+                        Description
+                        <textarea
+                          value={item.description}
+                          onChange={(event) =>
+                            handleExperienceChange(
+                              index,
+                              "description",
+                              event.target.value
+                            )
+                          }
+                          rows={4}
+                          placeholder="Describe what you learned or contributed..."
+                        />
+                      </label>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="profile-add-experience-button"
+                    onClick={addExperience}
+                  >
+                    + Add another experience
+                  </button>
+                </>
+              )}
+
+              {editingSection === "collaboration" && (
+                <>
+                  <label>
+                    What kind of teammates or projects are you looking for?
+                    <textarea
+                      value={sectionDraft.lookingFor}
+                      onChange={(event) =>
+                        setSectionDraft((previous) => ({
+                          ...previous,
+                          lookingFor: event.target.value,
+                        }))
+                      }
+                      rows={5}
+                      placeholder="Describe your ideal team and collaboration style..."
+                    />
+                  </label>
+
+                  <label>
+                    Preferred collaboration areas
+                    <textarea
+                      value={sectionDraft.preferredAreas}
+                      onChange={(event) =>
+                        setSectionDraft((previous) => ({
+                          ...previous,
+                          preferredAreas: event.target.value,
+                        }))
+                      }
+                      rows={3}
+                      placeholder="Web Development, AI & ML, Backend Development"
+                    />
+                    <span>Separate each area with a comma.</span>
+                  </label>
+                </>
+              )}
             </div>
 
             <div className="profile-edit-actions">
               <button
                 type="button"
                 className="profile-cancel-button"
-                onClick={() => {
-                  setProjectDraft(null);
-                  setEditingProjectIndex(null);
-                }}
+                onClick={closeSectionEditor}
               >
                 Cancel
               </button>
 
-              <button type="submit" className="profile-save-button">
-                Save Project
+              <button
+                type="submit"
+                className="profile-save-button"
+              >
+                Save Changes
               </button>
             </div>
           </form>

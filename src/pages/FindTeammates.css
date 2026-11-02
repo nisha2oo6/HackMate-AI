@@ -1145,3 +1145,83 @@
   justify-content: center;
   text-decoration: none;
 }
+
+/* Temporary connection request demo notice */
+.fm-demo-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(100, 190, 150, 0.25);
+  border-radius: 12px;
+  background: rgba(100, 190, 150, 0.08);
+  color: #72d6a6;
+  font-size: 13px;
+}
+
+.fm-demo-notice button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.fm-demo-hint {
+  margin-top: 12px;
+  color: #aab5c8;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.fm-demo-notice {
+  position: fixed;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 32px));
+  z-index: 1000;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+.fm-modal-overlay {
+  align-items: flex-start;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 90px 20px 30px;
+}
+
+.fm-request-modal {
+  margin: 0 auto;
+}
+/* Force connection modal to appear at the top of the screen */
+.fm-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 80px 20px 30px !important;
+  overflow-y: auto !important;
+  z-index: 2000 !important;
+}
+
+.fm-request-modal {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  margin: 0 auto !important;
+  transform: none !important;
+  align-self: flex-start !important;
+}
+
+/* Preview confirmation at the top */
+.fm-demo-notice {
+  position: fixed !important;
+  top: 85px !important;
+  left: 50% !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+  width: min(600px, calc(100% - 32px)) !important;
+  z-index: 2100 !important;
+}

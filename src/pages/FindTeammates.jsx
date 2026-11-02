@@ -5,29 +5,18 @@ import "./FindTeammates.css";
 import { getAllStudents } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 
-const initialIncomingRequests = [
-  {
-    id: 101,
-    fromStudentId: 5,
-    message: "Hi! I am interested in collaborating on an innovation project. Let's connect.",
-    status: "Pending",
-  },
-];
-
 function FindTeammates() {
   const location = useLocation();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDepartment, setSelectedDepartment] = useState("All Departments");
+  const [selectedDepartment, setSelectedDepartment] =
+    useState("All Departments");
   const [selectedSkill, setSelectedSkill] = useState("All Skills");
   const [selectedAvailability, setSelectedAvailability] = useState("All");
 
-  const [activeTab, setActiveTab] = useState("discover");
-
-  const [sentRequests, setSentRequests] = useState([]);
-  const [incomingRequests, setIncomingRequests] = useState(initialIncomingRequests);
-
   const [requestTarget, setRequestTarget] = useState(null);
   const [requestMessage, setRequestMessage] = useState("");
+  const [confirmation, setConfirmation] = useState("");
 
   const departments = [
     "All Departments",
@@ -55,7 +44,6 @@ function FindTeammates() {
     "CSS",
   ];
 
-  // Get the latest student data and exclude the logged-in student.
   const filteredStudents = useMemo(() => {
     return getAllStudents().filter((student) => {
       if (student.id === Number(CURRENT_STUDENT_ID)) {
@@ -68,7 +56,9 @@ function FindTeammates() {
         student.name.toLowerCase().includes(search) ||
         student.department.toLowerCase().includes(search) ||
         student.bio.toLowerCase().includes(search) ||
-        student.skills.some((skill) => skill.toLowerCase().includes(search)) ||
+        student.skills.some((skill) =>
+          skill.toLowerCase().includes(search)
+        ) ||
         student.interests.some((interest) =>
           interest.toLowerCase().includes(search)
         );
@@ -81,11 +71,13 @@ function FindTeammates() {
         selectedSkill === "All Skills" ||
         student.skills.includes(selectedSkill);
 
+      const availability = student.availability || "Open to teams";
+
       const matchesAvailability =
         selectedAvailability === "All" ||
         (selectedAvailability === "Open to teams"
-          ? student.availability === "Open to teams"
-          : student.availability !== "Open to teams");
+          ? availability === "Open to teams"
+          : availability === "Not looking currently");
 
       return (
         matchesSearch &&
@@ -95,165 +87,33 @@ function FindTeammates() {
       );
     });
   }, [
-  searchTerm,
-  selectedDepartment,
-  selectedSkill,
-  selectedAvailability,
-  location.key,
-]);
-
-  // Retrieve the latest saved profile of a student.
-  const getStudentById = (id) =>
-    getAllStudents().find((student) => student.id === Number(id));
-
-  const getSentRequest = (studentId) =>
-    sentRequests.find(
-      (request) =>
-        request.toStudentId === studentId && request.status === "Pending"
-    );
-
-  const isConnected = (studentId) =>
-    sentRequests.some(
-      (request) =>
-        request.toStudentId === studentId && request.status === "Accepted"
-    ) ||
-    incomingRequests.some(
-      (request) =>
-        request.fromStudentId === studentId && request.status === "Accepted"
-    );
-
-  const pendingSentRequests = sentRequests.filter(
-    (request) => request.status === "Pending"
-  );
-
-  const pendingIncomingRequests = incomingRequests.filter(
-    (request) => request.status === "Pending"
-  );
-
-  const acceptedSentRequests = sentRequests.filter(
-    (request) => request.status === "Accepted"
-  );
-
-  const acceptedIncomingRequests = incomingRequests.filter(
-    (request) => request.status === "Accepted"
-  );
+    searchTerm,
+    selectedDepartment,
+    selectedSkill,
+    selectedAvailability,
+    location.key,
+  ]);
 
   const openRequestModal = (student) => {
     setRequestTarget(student);
     setRequestMessage("");
+    setConfirmation("");
   };
 
-  const sendConnectionRequest = () => {
-    if (!requestTarget || isConnected(requestTarget.id)) return;
-
-    const alreadyPending = getSentRequest(requestTarget.id);
-    if (alreadyPending) return;
-
-    setSentRequests((previous) => [
-      ...previous,
-      {
-        id: Date.now(),
-        toStudentId: requestTarget.id,
-        message: requestMessage.trim(),
-        status: "Pending",
-      },
-    ]);
-
+  const closeRequestModal = () => {
     setRequestTarget(null);
     setRequestMessage("");
   };
 
-  const cancelSentRequest = (requestId) => {
-    setSentRequests((previous) =>
-      previous.map((request) =>
-        request.id === requestId
-          ? { ...request, status: "Cancelled" }
-          : request
-      )
+  const handleDemoRequest = () => {
+    if (!requestTarget) return;
+
+    setConfirmation(
+      `Demo only: Your connection request to ${requestTarget.name} is ready. It has not been sent or saved.`
     );
+
+    closeRequestModal();
   };
-
-  const acceptIncomingRequest = (requestId) => {
-    setIncomingRequests((previous) =>
-      previous.map((request) =>
-        request.id === requestId
-          ? { ...request, status: "Accepted" }
-          : request
-      )
-    );
-  };
-
-  const rejectIncomingRequest = (requestId) => {
-    setIncomingRequests((previous) =>
-      previous.map((request) =>
-        request.id === requestId
-          ? { ...request, status: "Rejected" }
-          : request
-      )
-    );
-  };
-
-  const getRequestButton = (student) => {
-    const pendingRequest = getSentRequest(student.id);
-
-    if (isConnected(student.id)) {
-      return (
-        <button className="fm-connect-button fm-connected-button" disabled>
-          Connected ✓
-        </button>
-      );
-    }
-
-    if (pendingRequest) {
-      return (
-        <button
-          className="fm-connect-button fm-request-sent-button"
-          onClick={() => cancelSentRequest(pendingRequest.id)}
-        >
-          Cancel Request
-        </button>
-      );
-    }
-
-    if (student.availability !== "Open to teams") {
-      return (
-        <button className="fm-connect-button" disabled>
-          Not Available
-        </button>
-      );
-    }
-
-    return (
-      <button
-        className="fm-connect-button fm-send-request-hover"
-        onClick={() => openRequestModal(student)}
-      >
-        Send Request
-      </button>
-    );
-  };
-
-  const acceptedConnectionIds = [
-    ...acceptedSentRequests.map((request) => request.toStudentId),
-    ...acceptedIncomingRequests.map((request) => request.fromStudentId),
-  ].filter((id, index, array) => array.indexOf(id) === index);
-
-  const previousRequests = [
-    ...sentRequests
-      .filter((request) => request.status !== "Pending")
-      .map((request) => ({
-        ...request,
-        direction: "Sent",
-        studentId: request.toStudentId,
-      })),
-    ...incomingRequests
-      .filter((request) => request.status !== "Pending")
-      .map((request) => ({
-        ...request,
-        direction: "Received",
-        studentId: request.fromStudentId,
-      })),
-  ];
 
   return (
     <div className="fm-page">
@@ -269,382 +129,206 @@ function FindTeammates() {
       </div>
 
       <div className="fm-tabs">
-        <button
-          className={activeTab === "discover" ? "fm-tab active" : "fm-tab"}
-          onClick={() => setActiveTab("discover")}
-        >
+        <button className="fm-tab active" type="button">
           Discover Students
-        </button>
-
-        <button
-          className={activeTab === "requests" ? "fm-tab active" : "fm-tab"}
-          onClick={() => setActiveTab("requests")}
-        >
-          Requests
-          {pendingIncomingRequests.length + pendingSentRequests.length > 0 && (
-            <span className="fm-tab-count">
-              {pendingIncomingRequests.length + pendingSentRequests.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          className={activeTab === "connections" ? "fm-tab active" : "fm-tab"}
-          onClick={() => setActiveTab("connections")}
-        >
-          Connections
         </button>
       </div>
 
-      {/* DISCOVER STUDENTS */}
-      {activeTab === "discover" && (
-        <>
-          <div className="fm-filters">
-            <div className="fm-search">
-              <input
-                type="text"
-                placeholder="Search by name, department, skill or interest..."
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </div>
-
-            <div className="fm-filter-field">
-              <select
-                value={selectedDepartment}
-                onChange={(event) => setSelectedDepartment(event.target.value)}
-              >
-                {departments.map((department) => (
-                  <option key={department} value={department}>
-                    {department}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="fm-filter-field">
-              <select
-                value={selectedSkill}
-                onChange={(event) => setSelectedSkill(event.target.value)}
-              >
-                <option value="All Skills">All Skills</option>
-                {allSkills.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="fm-filter-field">
-              <select
-                value={selectedAvailability}
-                onChange={(event) => setSelectedAvailability(event.target.value)}
-              >
-                <option value="All">All Availability</option>
-                <option value="Open to teams">Open to teams</option>
-                <option value="Not looking">Not looking currently</option>
-              </select>
-            </div>
-
-            {(searchTerm ||
-              selectedDepartment !== "All Departments" ||
-              selectedSkill !== "All Skills" ||
-              selectedAvailability !== "All") && (
-              <button
-                className="fm-clear-button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setSelectedDepartment("All Departments");
-                  setSelectedSkill("All Skills");
-                  setSelectedAvailability("All");
-                }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-
-          <div className="fm-results-heading">
-            <h2>Students</h2>
-            <span>{filteredStudents.length} profiles found</span>
-          </div>
-
-          <div className="fm-grid">
-            {filteredStudents.map((student) => (
-              <article className="fm-card" key={student.id}>
-                <div className="fm-card-top">
-                  <div className="fm-avatar">{student.initials}</div>
-
-                  <span
-                    className={
-                      student.availability === "Open to teams"
-                        ? "fm-status fm-status-open"
-                        : "fm-status fm-status-busy"
-                    }
-                  >
-                    {student.availability}
-                  </span>
-                </div>
-
-                <h3>{student.name}</h3>
-
-                <p className="fm-academic">
-                  {student.department} · {student.year} · Section {student.section}
-                </p>
-
-                <p className="fm-bio">{student.bio}</p>
-
-                <div className="fm-card-section">
-                  <span className="fm-label">SKILLS</span>
-                  <div className="fm-tags">
-                    {student.skills.map((skill) => (
-  <span className="fm-tag" key={skill}>
-    {skill}
-  </span>
-))}
-                  </div>
-                </div>
-
-                <div className="fm-card-section fm-interests">
-                  <span className="fm-label">INTERESTS</span>
-                  <div className="fm-tags">
-                    {student.interests.slice(0, 3).map((interest) => (
-                      <span className="fm-tag fm-interest-tag" key={interest}>
-                        {interest}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="fm-card-actions">
-                  <Link
-                    to={`/student/${student.id}`}
-                    className="fm-view-button"
-                  >
-                    View Profile
-                  </Link>
-
-                  {getRequestButton(student)}
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {filteredStudents.length === 0 && (
-            <div className="fm-empty-state">
-              <h3>No students found</h3>
-              <p>Try changing your search or filters.</p>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* REQUESTS */}
-      {activeTab === "requests" && (
-        <div className="fm-request-page">
-          <section className="fm-request-section">
-            <h2>Incoming Requests</h2>
-            <p className="fm-section-description">
-              Students who want to connect and collaborate with you.
-            </p>
-
-            {pendingIncomingRequests.length === 0 ? (
-              <p className="fm-empty-state">
-                You don't have any pending incoming requests.
-              </p>
-            ) : (
-              pendingIncomingRequests.map((request) => {
-                const student = getStudentById(request.fromStudentId);
-                if (!student) return null;
-
-                return (
-                  <div className="fm-request-card" key={request.id}>
-                    <div className="fm-avatar">{student.initials}</div>
-
-                    <div className="fm-request-details">
-                      <h3>{student.name}</h3>
-                      <p>{student.department} · {student.year}</p>
-                      <p className="fm-request-message">{request.message}</p>
-                      <Link
-                        to={`/student/${student.id}`}
-                        className="fm-view-button"
-                      >
-                        View Profile
-                      </Link>
-                    </div>
-
-                    <div className="fm-request-actions">
-                      <button
-                        className="fm-accept-button"
-                        onClick={() => acceptIncomingRequest(request.id)}
-                      >
-                        Accept
-                      </button>
-
-                      <button
-                        className="fm-reject-button"
-                        onClick={() => rejectIncomingRequest(request.id)}
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </section>
-
-          <section className="fm-request-section">
-            <h2>Sent Requests</h2>
-            <p className="fm-section-description">
-              Requests you've sent to other students.
-            </p>
-
-            {pendingSentRequests.length === 0 ? (
-              <p className="fm-empty-state">
-                You haven't sent any pending requests.
-              </p>
-            ) : (
-              pendingSentRequests.map((request) => {
-                const student = getStudentById(request.toStudentId);
-                if (!student) return null;
-
-                return (
-                  <div className="fm-request-card" key={request.id}>
-                    <div className="fm-avatar">{student.initials}</div>
-
-                    <div className="fm-request-details">
-                      <h3>{student.name}</h3>
-                      <p>{student.department} · {student.year}</p>
-                      <span className="fm-request-pending">Pending</span>
-                      <Link
-                        to={`/student/${student.id}`}
-                        className="fm-view-button"
-                      >
-                        View Profile
-                      </Link>
-                    </div>
-
-                    <button
-                      className="fm-reject-button"
-                      onClick={() => cancelSentRequest(request.id)}
-                    >
-                      Cancel Request
-                    </button>
-                  </div>
-                );
-              })
-            )}
-          </section>
-
-          <section className="fm-request-section">
-            <h2>Previous Requests</h2>
-
-            {previousRequests.length === 0 ? (
-              <p className="fm-empty-state">No previous requests yet.</p>
-            ) : (
-              previousRequests.map((request) => {
-                const student = getStudentById(request.studentId);
-                if (!student) return null;
-
-                return (
-                  <div className="fm-request-card" key={request.id}>
-                    <div className="fm-avatar">{student.initials}</div>
-
-                    <div className="fm-request-details">
-                      <h3>{student.name}</h3>
-                      <p>{request.direction} request</p>
-                      <Link
-                        to={`/student/${student.id}`}
-                        className="fm-view-button"
-                      >
-                        View Profile
-                      </Link>
-                    </div>
-
-                    <span className="fm-request-pending">
-                      {request.status}
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </section>
+      {confirmation && (
+        <div className="fm-demo-notice" role="status">
+          {confirmation}
+          <button
+            type="button"
+            onClick={() => setConfirmation("")}
+            aria-label="Dismiss notification"
+          >
+            ×
+          </button>
         </div>
       )}
 
-      {/* CONNECTIONS */}
-      {activeTab === "connections" && (
-        <section className="fm-request-section">
-          <h2>Your Connections</h2>
-          <p className="fm-section-description">
-            Students whose connection requests have been accepted.
-          </p>
+      <div className="fm-filters">
+        <div className="fm-search">
+          <input
+            type="text"
+            placeholder="Search by name, department, skill or interest..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </div>
 
-          {acceptedConnectionIds.length === 0 ? (
-            <p className="fm-empty-state">
-              You don't have any connections yet. Start by discovering students!
-            </p>
-          ) : (
-            <div className="fm-grid">
-              {acceptedConnectionIds.map((studentId) => {
-                const student = getStudentById(studentId);
-                if (!student) return null;
+        <div className="fm-filter-field">
+          <select
+            value={selectedDepartment}
+            onChange={(event) => setSelectedDepartment(event.target.value)}
+          >
+            {departments.map((department) => (
+              <option key={department} value={department}>
+                {department}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                return (
-                  <article className="fm-card" key={student.id}>
-                    <div className="fm-card-top">
-                      <div className="fm-avatar">{student.initials}</div>
-                      <span className="fm-status fm-status-open">Connected</span>
-                    </div>
+        <div className="fm-filter-field">
+          <select
+            value={selectedSkill}
+            onChange={(event) => setSelectedSkill(event.target.value)}
+          >
+            <option value="All Skills">All Skills</option>
+            {allSkills.map((skill) => (
+              <option key={skill} value={skill}>
+                {skill}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                    <h3>{student.name}</h3>
-                    <p className="fm-academic">
-                      {student.department} · {student.year}
-                    </p>
-                    <p className="fm-bio">{student.bio}</p>
+        <div className="fm-filter-field">
+          <select
+            value={selectedAvailability}
+            onChange={(event) => setSelectedAvailability(event.target.value)}
+          >
+            <option value="All">All Availability</option>
+            <option value="Open to teams">Open to Team</option>
+            <option value="Not looking">Not Looking Currently</option>
+          </select>
+        </div>
 
-                    <div className="fm-card-actions">
-                      <Link
-                        to={`/student/${student.id}`}
-                        className="fm-view-button"
-                      >
-                        View Profile
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        {(searchTerm ||
+          selectedDepartment !== "All Departments" ||
+          selectedSkill !== "All Skills" ||
+          selectedAvailability !== "All") && (
+          <button
+            className="fm-clear-button"
+            onClick={() => {
+              setSearchTerm("");
+              setSelectedDepartment("All Departments");
+              setSelectedSkill("All Skills");
+              setSelectedAvailability("All");
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="fm-results-heading">
+        <h2>Students</h2>
+        <span>{filteredStudents.length} profiles found</span>
+      </div>
+
+      <div className="fm-grid">
+        {filteredStudents.map((student) => {
+          const availability = student.availability || "Open to teams";
+          const isOpenToTeam = availability === "Open to teams";
+
+          return (
+            <article className="fm-card" key={student.id}>
+              <div className="fm-card-top">
+                <div className="fm-avatar">{student.initials}</div>
+
+                <span
+                  className={
+                    isOpenToTeam
+                      ? "fm-status fm-status-open"
+                      : "fm-status fm-status-busy"
+                  }
+                >
+                  {isOpenToTeam
+                    ? "Open to Team"
+                    : "Not Looking Currently"}
+                </span>
+              </div>
+
+              <h3>{student.name}</h3>
+
+              <p className="fm-academic">
+                {student.department} · {student.year} · Section{" "}
+                {student.section}
+              </p>
+
+              <p className="fm-bio">{student.bio}</p>
+
+              <div className="fm-card-section">
+                <span className="fm-label">SKILLS</span>
+                <div className="fm-tags">
+                  {student.skills.map((skill) => (
+                    <span className="fm-tag" key={skill}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="fm-card-section fm-interests">
+                <span className="fm-label">INTERESTS</span>
+                <div className="fm-tags">
+                  {student.interests.slice(0, 3).map((interest) => (
+                    <span className="fm-tag fm-interest-tag" key={interest}>
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="fm-card-actions">
+                <Link
+                  to={`/student/${student.id}`}
+                  className="fm-view-button"
+                >
+                  View Profile
+                </Link>
+
+                <button
+                  type="button"
+                  className="fm-connect-button"
+                  onClick={() => openRequestModal(student)}
+                >
+                  Connect +
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      {filteredStudents.length === 0 && (
+        <div className="fm-empty-state">
+          <h3>No students found</h3>
+          <p>Try changing your search or filters.</p>
+        </div>
       )}
 
-      {/* SEND CONNECTION REQUEST MODAL */}
+      {/* CONNECTION REQUEST DEMO MODAL */}
       {requestTarget && (
         <div
           className="fm-modal-overlay"
-          onClick={() => setRequestTarget(null)}
+          onClick={closeRequestModal}
         >
           <div
             className="fm-modal fm-request-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <button
+              type="button"
               className="fm-modal-close"
-              onClick={() => setRequestTarget(null)}
+              onClick={closeRequestModal}
             >
               ×
             </button>
 
             <h2>Send Connection Request</h2>
+
             <p>
-              You're sending a connection request to{" "}
+              You're preparing a connection request to{" "}
               <strong>{requestTarget.name}</strong>.
             </p>
 
-            <label className="fm-label" htmlFor="connection-message">
+            <label
+              className="fm-label"
+              htmlFor="connection-message"
+            >
               PERSONAL MESSAGE (OPTIONAL)
             </label>
 
@@ -662,19 +346,26 @@ function FindTeammates() {
               {requestMessage.length}/300 characters
             </p>
 
+            <p className="fm-demo-hint">
+              Connection requests will be enabled when the backend is
+              integrated. This is currently a frontend demonstration.
+            </p>
+
             <div className="fm-request-modal-actions">
               <button
+                type="button"
                 className="fm-view-button"
-                onClick={() => setRequestTarget(null)}
+                onClick={closeRequestModal}
               >
                 Cancel
               </button>
 
               <button
+                type="button"
                 className="fm-connect-button"
-                onClick={sendConnectionRequest}
+                onClick={handleDemoRequest}
               >
-                Send Request
+                Preview Request
               </button>
             </div>
           </div>
