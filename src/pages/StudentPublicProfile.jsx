@@ -456,16 +456,35 @@ function StudentPublicProfile() {
             <h2>Achievements and Recognition</h2>
 
             {achievements.length ? (
-              <ul className="profile-achievement-list">
-                {achievements.map((item, index) => (
-                  <li key={`achievement-${index}`}>
-                    {getDetailText(item)}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>No achievements added yet.</p>
-            )}
+  <ul className="profile-achievement-list">
+    {achievements.map((achievement, index) => {
+      const title =
+        typeof achievement === "string"
+          ? achievement
+          : achievement.title ||
+            achievement.name ||
+            "Achievement";
+
+      const description =
+        typeof achievement === "string"
+          ? ""
+          : achievement.description || "";
+
+      return (
+        <li
+          className="profile-achievement-item"
+          key={`achievement-${index}`}
+        >
+          <h3>{title}</h3>
+
+          {description && <p>{description}</p>}
+        </li>
+      );
+    })}
+  </ul>
+) : (
+  <p>No achievements added yet.</p>
+)}
           </div>
 
           <div className="profile-additional-group">

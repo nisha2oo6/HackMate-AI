@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Register.css";
+import { DEPARTMENTS } from "../data/departments";
 
 function Register() {
   const [name, setName] = useState("");
@@ -132,33 +134,12 @@ function Register() {
                 <option value="" disabled>
                   Select your department
                 </option>
-                <option value="CSE">
-                  Computer Science and Engineering
-                </option>
-                <option value="IT">
-                  Information Technology
-                </option>
-                <option value="AIML">
-                  Artificial Intelligence and Machine Learning
-                </option>
-                <option value="AIDS">
-                  Artificial Intelligence and Data Science
-                </option>
-                <option value="ECE">
-                  Electronics and Communication Engineering
-                </option>
-                <option value="EEE">
-                  Electrical and Electronics Engineering
-                </option>
-                <option value="MECH">
-                  Mechanical Engineering
-                </option>
-                <option value="CIVIL">
-                  Civil Engineering
-                </option>
-                <option value="OTHER">
-                  Other
-                </option>
+
+                {DEPARTMENTS.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
               </select>
             </div>
 

@@ -78,6 +78,18 @@ function MyTeams() {
       (member) => member.role === "Leader"
     );
 
+    // Display only the overview on the My Teams card.
+    // Supports both new structured descriptions and older team records.
+    const descriptionPreview =
+      team.descriptionDetails?.overview?.trim() ||
+      (typeof team.description === "string"
+        ? team.description
+            .split(/\n\s*\n/)
+            [0]
+            .replace(/^overview:\s*/i, "")
+            .trim()
+        : "");
+
     return (
       <div className="mt-team-card" key={team.id}>
         <div className="mt-team-top">
@@ -100,7 +112,9 @@ function MyTeams() {
             : "Independent Project"}
         </p>
 
-        <p className="mt-description">{team.description}</p>
+        {descriptionPreview && (
+          <p className="mt-description">{descriptionPreview}</p>
+        )}
 
         <div className="mt-team-info">
           <div>
@@ -212,8 +226,7 @@ function MyTeams() {
       )}
 
       {/* Teams joined by the current student */}
-      {/* Teams joined by the current student */}
-<div className="mt-section-heading mt-joined-section">
+      <div className="mt-section-heading mt-joined-section">
         <div>
           <h2>Teams You've Joined</h2>
           <p>
@@ -229,19 +242,19 @@ function MyTeams() {
         </div>
       ) : (
         <div className="mt-empty-state mt-joined-empty">
-  <div className="mt-empty-icon">🤝</div>
+          <div className="mt-empty-icon">🤝</div>
 
-  <h3>You haven't joined any teams yet</h3>
+          <h3>You haven't joined any teams yet</h3>
 
-  <p>
-    When you accept a team invitation, that team
-    will appear here.
-  </p>
+          <p>
+            When you accept a team invitation, that team
+            will appear here.
+          </p>
 
-  <Link to="/find-teammates" className="mt-create-button">
-    Find Teammates
-  </Link>
-</div>
+          <Link to="/find-teammates" className="mt-create-button">
+            Find Teammates
+          </Link>
+        </div>
       )}
     </div>
   );

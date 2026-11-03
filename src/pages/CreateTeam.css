@@ -662,44 +662,6 @@
   color: #8de2c1;
 }
 
-.ct-invite-link-box {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-}
-
-.ct-invite-link-box input {
-  min-width: 0;
-  flex: 1;
-  padding: 11px;
-  border: 1px solid #35425e;
-  border-radius: 7px;
-  outline: none;
-  background: #10192b;
-  color: #cbd6f5;
-  font-size: 12px;
-}
-
-.ct-invite-link-box button {
-  padding: 10px 14px;
-  border: 1px solid #8295ff;
-  border-radius: 7px;
-  background: #586fda;
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.ct-invite-link-box button:hover {
-  background: #6c82e9;
-}
-
-.ct-copy-message {
-  color: #8de2c1;
-  font-size: 11px;
-}
-
 .ct-review-note {
   margin-top: 22px;
   padding: 13px;
@@ -725,13 +687,6 @@
     padding: 18px;
   }
 
-  .ct-invite-link-box {
-    flex-direction: column;
-  }
-
-  .ct-invite-link-box button {
-    width: 100%;
-  }
 }
 /* View Profile action in invitation list */
 
@@ -941,3 +896,30 @@
     padding: 18px;
   }
 }
+
+/* Detailed team description fields */
+.ct-description-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ct-description-help {
+  font-size: 13px;
+  line-height: 1.7;
+  opacity: 0.8;
+  margin-top: -5px;
+}
+
+.ct-description-item {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ct-description-item textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 90px;
+}
+

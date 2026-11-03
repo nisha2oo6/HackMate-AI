@@ -7,7 +7,7 @@ import {
 } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 import { Link } from "react-router-dom";
-
+import { DEPARTMENTS } from "../data/departments";
 // Get the student's accepted team participations from Local Storage.
 function getStudentTeamParticipation(studentId) {
   try {
@@ -748,18 +748,29 @@ function StudentProfile() {
             </Link>
 
             <ul className="profile-achievement-list">
-              {achievements.map((achievement, index) => (
-                <li
-                  key={`${index}-${typeof achievement === "string"
-                    ? achievement
-                    : achievement.title || achievement.name || "achievement"}`}
-                >
-                  {typeof achievement === "string"
-                    ? achievement
-                    : achievement.title || achievement.name}
-                </li>
-              ))}
-            </ul>
+  {achievements.map((achievement, index) => {
+    const title =
+      typeof achievement === "string"
+        ? achievement
+        : achievement.title || achievement.name || "Achievement";
+
+    const description =
+      typeof achievement === "string"
+        ? ""
+        : achievement.description || "";
+
+    return (
+      <li
+        className="profile-achievement-item"
+        key={`achievement-${index}`}
+      >
+        <h3>{title}</h3>
+
+        {description && <p>{description}</p>}
+      </li>
+    );
+  })}
+</ul>
 
             {achievements.length === 0 && (
               <p>No achievements added yet.</p>
@@ -1032,14 +1043,22 @@ function StudentProfile() {
 
               <div className="profile-edit-row">
                 <label>
-                  Department
-                  <input
-                    name="department"
-                    value={editDraft.department ?? ""}
-                    onChange={handleEditChange}
-                    required
-                  />
-                </label>
+  Department
+  <select
+    name="department"
+    value={editDraft.department ?? ""}
+    onChange={handleEditChange}
+    required
+  >
+    <option value="">Select Department</option>
+
+    {DEPARTMENTS.map((department) => (
+      <option key={department} value={department}>
+        {department}
+      </option>
+    ))}
+  </select>
+</label>
 
                 <label>
                   Academic year

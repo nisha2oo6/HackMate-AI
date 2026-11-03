@@ -5,6 +5,103 @@ import { getAllStudents } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
 import "./TeamDetails.css";
 
+// Normalize event names.
+const cleanEventName = (name = "") =>
+  name.trim().replace(/\s+/g, " ");
+
+const normalizeEventName = (name) =>
+  cleanEventName(name).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+const EVENT_ALIASES = {
+  sih: "smartindiahackathon",
+  smartindiahackathon: "smartindiahackathon",
+};
+
+const getCanonicalEventName = (name) => {
+  const normalizedName = normalizeEventName(name);
+  return EVENT_ALIASES[normalizedName] || normalizedName;
+};
+
+const getEventKey = (name, year) =>
+  `${getCanonicalEventName(name)}-${String(year || "").trim()}`;
+
+// Support newer records and older records with eventKey.
+const getExistingTeamEventKey = (team) => {
+  if (team.eventName) {
+    return getEventKey(team.eventName, team.eventYear);
+  }
+
+  if (team.eventKey) {
+    const separatorIndex = team.eventKey.lastIndexOf("-");
+
+    if (separatorIndex === -1) return team.eventKey;
+
+    return getEventKey(
+      team.eventKey.slice(0, separatorIndex),
+      team.eventKey.slice(separatorIndex + 1)
+    );
+  }
+
+  return "";
+};
+
+// Check whether a student has already joined another team
+// for the same event and year.
+const isAlreadyInSameEventTeam = (
+  teams,
+  studentId,
+  currentTeam
+) => {
+  if (currentTeam?.type !== "event") return false;
+
+  const currentEventKey = getExistingTeamEventKey(currentTeam);
+
+  if (!currentEventKey) return false;
+
+  return teams.some((otherTeam) => {
+    if (
+      String(otherTeam.id) === String(currentTeam.id) ||
+      otherTeam.type !== "event"
+    ) {
+      return false;
+    }
+
+    const sameEvent =
+      getExistingTeamEventKey(otherTeam) === currentEventKey;
+
+    const alreadyAccepted = (otherTeam.members || []).some(
+      (member) =>
+        Number(member.studentId) === Number(studentId) &&
+        member.status?.toLowerCase() === "accepted"
+    );
+
+    return sameEvent && alreadyAccepted;
+  });
+};
+
+const DESCRIPTION_SECTIONS = [
+  {
+    key: "overview",
+    title: "Project / Event Overview",
+  },
+  {
+    key: "problemStatement",
+    title: "Problem Statement",
+  },
+  {
+    key: "proposedSolution",
+    title: "Proposed Solution",
+  },
+  {
+    key: "expectedContribution",
+    title: "Expected Contribution",
+  },
+  {
+    key: "timeCommitment",
+    title: "Time Commitment",
+  },
+];
+
 function TeamDetails() {
   const { id } = useParams();
   const location = useLocation();
@@ -33,6 +130,10 @@ function TeamDetails() {
   }, [id]);
 
   const allStudents = getAllStudents();
+
+  const savedTeams = JSON.parse(
+    localStorage.getItem("hackmateTeams") || "[]"
+  );
 
   const members = team?.members || [];
   const invitations = team?.invitations || [];
@@ -79,8 +180,7 @@ function TeamDetails() {
     );
   });
 
-  // Exclude the leader, accepted members and students
-  // who already have pending invitations.
+  // Exclude students who are not eligible for this team.
   const eligibleStudents = filteredStudents.filter((student) => {
     const isCurrentStudent =
       Number(student.id) === Number(CURRENT_STUDENT_ID);
@@ -96,32 +196,74 @@ function TeamDetails() {
         invitation.status === "Pending"
     );
 
+    const isInAnotherSameEventTeam = isAlreadyInSameEventTeam(
+      savedTeams,
+      student.id,
+      team
+    );
+
     return (
       !isCurrentStudent &&
       !isAlreadyMember &&
-      !isAlreadyInvited
+      !isAlreadyInvited &&
+      !isInAnotherSameEventTeam
     );
   });
 
   // Invite a student to the team.
   const handleInvite = (student) => {
-    if (!isLeader) return;
+    if (!isLeader || !team) return;
 
-    if (availableSlots <= 0) {
+    // Always read the latest saved team data.
+    const latestTeams = JSON.parse(
+      localStorage.getItem("hackmateTeams") || "[]"
+    );
+
+    const latestTeam = latestTeams.find(
+      (item) => String(item.id) === String(team.id)
+    );
+
+    if (!latestTeam) {
+      setMessage("Team not found. Please refresh the page.");
+      return;
+    }
+
+    const latestMembers = latestTeam.members || [];
+    const latestInvitations = latestTeam.invitations || [];
+
+    const latestAcceptedCount = latestMembers.filter(
+      (member) => member.status === "Accepted"
+    ).length;
+
+    if (latestAcceptedCount >= latestTeam.teamSize) {
       setMessage("Your team has reached its maximum capacity.");
       return;
     }
 
-    const alreadyMember = members.some(
+    const alreadyMember = latestMembers.some(
       (member) =>
         Number(member.studentId) === Number(student.id)
     );
 
-    const alreadyInvited = invitations.some(
+    const alreadyInvited = latestInvitations.some(
       (invitation) =>
         Number(invitation.studentId) === Number(student.id) &&
         invitation.status === "Pending"
     );
+
+    // Recheck same-event membership immediately before inviting.
+    const alreadyInSameEvent = isAlreadyInSameEventTeam(
+      latestTeams,
+      student.id,
+      latestTeam
+    );
+
+    if (alreadyInSameEvent) {
+      setMessage(
+        `${student.name} has already joined another team for this event.`
+      );
+      return;
+    }
 
     if (alreadyMember || alreadyInvited) {
       setMessage(
@@ -131,9 +273,9 @@ function TeamDetails() {
     }
 
     const updatedTeam = {
-      ...team,
+      ...latestTeam,
       invitations: [
-        ...invitations,
+        ...latestInvitations,
         {
           id: Date.now(),
           studentId: student.id,
@@ -144,12 +286,8 @@ function TeamDetails() {
       ],
     };
 
-    const savedTeams = JSON.parse(
-      localStorage.getItem("hackmateTeams") || "[]"
-    );
-
-    const updatedTeams = savedTeams.map((item) =>
-      String(item.id) === String(team.id)
+    const updatedTeams = latestTeams.map((item) =>
+      String(item.id) === String(latestTeam.id)
         ? updatedTeam
         : item
     );
@@ -185,11 +323,14 @@ function TeamDetails() {
       <div className="td-header">
         <div>
           <span className="td-eyebrow">TEAM MANAGEMENT</span>
-          <h1>{team.name}</h1>
+          <h1>{team.name || "Untitled Team"}</h1>
           <p>
             {team.type === "event"
-              ? team.eventName
+              ? team.eventName || "Event Team"
               : "Independent Project Team"}
+            {team.type === "event" && team.eventYear
+              ? ` · ${team.eventYear}`
+              : ""}
           </p>
         </div>
 
@@ -226,11 +367,34 @@ function TeamDetails() {
       </div>
 
       <div className="td-content">
-        {/* Team overview */}
+        {/* Team overview and detailed description */}
         <section className="td-card">
           <h2>Team Overview</h2>
 
-          <p>{team.description}</p>
+          {team.descriptionDetails ? (
+            <div className="td-description-details">
+              {DESCRIPTION_SECTIONS.map((section) => {
+                const value =
+                  team.descriptionDetails[section.key];
+
+                if (!value) return null;
+
+                return (
+                  <div
+                    className="td-description-item"
+                    key={section.key}
+                  >
+                    <h3>{section.title}</h3>
+                    <p>{value}</p>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="td-legacy-description">
+              {team.description || "No team description provided."}
+            </p>
+          )}
 
           <h3>Required Skills</h3>
 
@@ -252,7 +416,10 @@ function TeamDetails() {
           {members
             .filter((member) => member.status === "Accepted")
             .map((member, index) => (
-              <div className="td-member" key={member.studentId || index}>
+              <div
+                className="td-member"
+                key={member.studentId || index}
+              >
                 <div>
                   <strong>{member.name}</strong>
                   <span>{member.role || "Member"}</span>
@@ -354,7 +521,9 @@ function TeamDetails() {
             )}
 
             {message && (
-              <p className="td-message">{message}</p>
+              <p className="td-message" role="status">
+                {message}
+              </p>
             )}
           </section>
         )}

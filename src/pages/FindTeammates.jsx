@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import "./FindTeammates.css";
 import { getAllStudents } from "../data/students";
 import { CURRENT_STUDENT_ID } from "../data/currentStudent";
-
+import { DEPARTMENTS } from "../data/departments";
 function FindTeammates() {
   const location = useLocation();
 
@@ -19,13 +19,19 @@ function FindTeammates() {
   const [confirmation, setConfirmation] = useState("");
 
   const departments = [
-    "All Departments",
-    "CSE",
-    "IT",
-    "AI & DS",
-    "ECE",
-  ];
-
+  "All Departments",
+  "CSE",
+  "CSE (AIML)",
+  "CSBS",
+  "ECE",
+  "MECHANICAL",
+  "AI & DS",
+  "CCE",
+  "CSE (Cyber Security)",
+  "VLSI",
+  "BIO TECH",
+  "IT",
+];
   const allSkills = [
     "Java",
     "Spring Boot",

@@ -1448,3 +1448,57 @@
   color: #72d6a6;
   border: 1px solid rgba(100, 190, 150, 0.25);
 }
+/* Achievement title and description */
+.profile-achievement-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.profile-achievement-item h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #e8edf8;
+}
+
+.profile-achievement-item p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #aab5c8;
+}
+/* =========================================
+   PROFILE EDIT DROPDOWNS
+========================================= */
+
+.profile-edit-fields select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #303b56;
+  border-radius: 9px;
+  outline: none;
+  background-color: #0b1223;
+  color: #f4f6ff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  color-scheme: dark;
+  transition: border-color 0.2s ease;
+}
+
+.profile-edit-fields select:focus {
+  border-color: #8795ff;
+}
+
+.profile-edit-fields select option {
+  background-color: #10172b;
+  color: #f4f6ff;
+}
