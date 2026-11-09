@@ -1,16 +1,62 @@
-# React + Vite
+# HackMate AI 🚀
+### Intelligent Student Team Formation & Collaboration Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+HackMate AI is a student-focused platform that helps students discover teammates, connect with like-minded individuals, and build diverse teams for hackathons and independent projects.
 
-Currently, two official plugins are available:
+The goal is to make collaboration easier by connecting students based on their skills, interests, and project goals rather than limiting opportunities to existing friend circles.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Key Features
 
-## React Compiler
+- **Student Profiles:** Showcase skills, interests, projects, and achievements.
+- **Find Teammates:** Discover students using search and filters.
+- **Team Formation:** Create teams, define requirements, and invite members.
+- **Connections:** Send and manage student connection requests.
+- **Invitation Management:** Accept, decline, and manage team invitations.
+- **Project Collaboration:** Organize and showcase project-related information.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Technology Stack
 
-## Expanding the ESLint configuration
+**Current Frontend**
+- React
+- Vite
+- JavaScript
+- React Router
+- CSS
+- LocalStorage
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Planned Backend & AI**
+- Java
+- Spring Boot
+- MySQL
+- Python (AI/ML)
+
+## 🚧 Development Status
+
+The frontend prototype is currently under development. Core interfaces and student collaboration workflows are being built using demonstration data and LocalStorage.
+
+Authentication, password recovery, and backend integration are not yet implemented.
+
+## 🔮 Future Plans
+
+- Build REST APIs using Spring Boot.
+- Integrate MySQL for persistent data storage.
+- Implement secure authentication and email verification.
+- Develop AI-powered teammate recommendations.
+- Match students based on skills, interests, and complementary abilities.
+- Introduce in-platform communication and real-time notifications.
+
+## 🎯 Vision
+
+To create a collaborative student ecosystem where ideas meet talent, students discover opportunities beyond their familiar circles, and innovative projects become reality.
+
+**Find your people. Build your ideas.**
+
+## 👩‍💻 Developer
+
+**Noor Nisha T.**  
+BE Computer Science and Engineering  
+Rajalakshmi Institute of Technology
+
+---
+
+*HackMate AI is an ongoing academic and portfolio project.*
